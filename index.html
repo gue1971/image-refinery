@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Refinery (v2)</title>
+    <title>Image Refinery (v3)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
@@ -17,7 +17,7 @@
             flex-direction: column;
             align-items: center;
             height: 100vh;
-            overflow: hidden; /* スクロール防止 */
+            overflow: hidden;
         }
         .controls {
             padding: 15px;
@@ -34,7 +34,7 @@
         .img-container {
             flex-grow: 1;
             width: 100%;
-            height: calc(100vh - 70px); /* コントロール分を引く */
+            height: calc(100vh - 70px);
             background: #000;
             overflow: hidden;
             position: relative;
@@ -96,69 +96,88 @@
     const saveBtn = document.getElementById('saveBtn');
     let cropper;
 
-    // ファイル入力
     input.addEventListener('change', (e) => {
         if (e.target.files && e.target.files.length > 0) loadFile(e.target.files[0]);
     });
 
-    // D&D
     document.body.addEventListener('dragover', (e) => e.preventDefault());
     document.body.addEventListener('drop', (e) => {
         e.preventDefault();
         if (e.dataTransfer.files.length > 0) {
             loadFile(e.dataTransfer.files[0]);
-            input.files = e.dataTransfer.files; 
+            input.files = e.dataTransfer.files;
         }
     });
 
-    // ボタン保存
     saveBtn.addEventListener('click', saveImage);
 
-    // キーボード操作の完全掌握（ここを追加・変更）
     document.addEventListener('keydown', (e) => {
-        // 入力欄にいる時は何もしない（文字入力優先）
         if (e.target === filenameInput) {
             if (e.key === 'Enter') {
-                e.preventDefault(); // フォーム送信などを防ぐ
-                saveImage();        // 入力欄でエンター押しても保存
-                filenameInput.blur(); // フォーカスを外してキー操作モードへ
+                e.preventDefault();
+                saveImage();
+                filenameInput.blur();
             }
             return;
         }
 
-        // Cropperが起動していないなら無視
         if (!cropper) return;
 
-        // キー操作のマッピング
-        const shift = e.shiftKey;
-        const moveDistance = 1; // 1px単位
-
-        // 矢印キーでトリミング枠を操作
+        // キー操作ロジック
         if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-            e.preventDefault(); // 画面スクロール防止
+            e.preventDefault();
             
-            // 現在の切り抜きデータ（画像のピクセル座標ベース）を取得
-            let data = cropper.getData(); 
+            let data = cropper.getData(); // 現在の切り抜きデータ（ピクセル座標）
+            const shift = e.shiftKey;
+            
+            // 拡大縮小の感度（ピクセル数）。4pxにすると比率(4:3)が綺麗に保たれやすい
+            const resizeStep = 4; 
+            const moveStep = 1;
 
             if (shift) {
-                // Shift + 矢印：サイズ変更（右と下を基準に拡大縮小）
-                if (e.key === 'ArrowRight') data.width += moveDistance;
-                if (e.key === 'ArrowLeft') data.width -= moveDistance;
-                if (e.key === 'ArrowDown') data.height += moveDistance;
-                if (e.key === 'ArrowUp') data.height -= moveDistance;
-            } else {
-                // 矢印のみ：移動
-                if (e.key === 'ArrowLeft') data.x -= moveDistance;
-                if (e.key === 'ArrowRight') data.x += moveDistance;
-                if (e.key === 'ArrowUp') data.y -= moveDistance;
-                if (e.key === 'ArrowDown') data.y += moveDistance;
-            }
+                // --- 中心基準のリサイズ処理 ---
+                
+                // 変更量の決定
+                // Shift+↑ or → : 拡大 (+resizeStep)
+                // Shift+↓ or ← : 縮小 (-resizeStep)
+                let deltaW = 0;
+                if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+                    deltaW = resizeStep;
+                } else {
+                    deltaW = -resizeStep;
+                }
 
-            // 新しいデータを適用
-            cropper.setData(data);
+                // 比率(4:3)を維持した高さの変更量
+                let deltaH = deltaW * (3/4);
+
+                // 新しいサイズ
+                let newWidth = data.width + deltaW;
+                let newHeight = data.height + deltaH;
+
+                // 中心を維持するための座標調整
+                // 幅が増えた分(deltaW)の半分だけ、開始位置(x)を左にずらす
+                let newX = data.x - (deltaW / 2);
+                let newY = data.y - (deltaH / 2);
+
+                // 適用（※マイナスサイズにならないよう最小値をガード）
+                if (newWidth > 10 && newHeight > 10) {
+                    data.width = newWidth;
+                    data.height = newHeight;
+                    data.x = newX;
+                    data.y = newY;
+                    cropper.setData(data);
+                }
+
+            } else {
+                // --- 通常の移動処理 (1px単位) ---
+                if (e.key === 'ArrowLeft') data.x -= moveStep;
+                if (e.key === 'ArrowRight') data.x += moveStep;
+                if (e.key === 'ArrowUp') data.y -= moveStep;
+                if (e.key === 'ArrowDown') data.y += moveStep;
+                cropper.setData(data);
+            }
         }
 
-        // エンターキーで保存
         if (e.key === 'Enter') {
             e.preventDefault();
             saveImage();
@@ -185,11 +204,10 @@
             cropper = new Cropper(image, {
                 aspectRatio: 4 / 3,
                 viewMode: 1, 
-                dragMode: 'move', // 画像自体をドラッグで動かす設定
+                dragMode: 'move',
                 autoCropArea: 0.8,
                 toggleDragModeOnDblclick: false,
                 ready: function() {
-                    // 読み込み完了時、入力欄ではなく全体にフォーカスがある状態にする
                     document.activeElement.blur();
                 }
             });

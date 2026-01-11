@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horse Photo Cropper (4:3 -> 640x480)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #222;
+            color: #eee;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+        }
+        .controls {
+            padding: 15px;
+            background: #333;
+            width: 100%;
+            box-sizing: border-box;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid #444;
+        }
+        .img-container {
+            flex-grow: 1;
+            width: 100%;
+            background: #000;
+            overflow: hidden;
+            position: relative;
+        }
+        /* 画像が読み込まれるまでのプレースホルダー */
+        .placeholder {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #666;
+            text-align: center;
+        }
+        input[type="text"] {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #555;
+            background: #222;
+            color: #fff;
+            width: 150px;
+            text-align: center;
+            font-size: 16px;
+        }
+        button {
+            padding: 8px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        button:hover { background-color: #0056b3; }
+        input[type="file"] { color: #ccc; }
+    </style>
+</head>
+<body>
+
+<div class="controls">
+    <input type="file" id="imageInput" accept="image/*">
+    
+    <input type="text" id="filenameInput" placeholder="YYYYMMDD">
+    <span>.jpeg</span>
+
+    <button id="saveBtn">保存 (Enter)</button>
+</div>
+
+<div class="img-container">
+    <div class="placeholder">画像をドラッグ＆ドロップ<br>またはファイルを選択</div>
+    <img id="image" style="max-width: 100%; display: block;">
+</div>
+
+<script>
+    const image = document.getElementById('image');
+    const input = document.getElementById('imageInput');
+    const filenameInput = document.getElementById('filenameInput');
+    const saveBtn = document.getElementById('saveBtn');
+    let cropper;
+
+    // ファイル選択時の処理
+    input.addEventListener('change', (e) => {
+        const files = e.target.files;
+        if (files && files.length > 0) {
+            loadFile(files[0]);
+        }
+    });
+
+    // ドラッグ＆ドロップ対応
+    document.body.addEventListener('dragover', (e) => e.preventDefault());
+    document.body.addEventListener('drop', (e) => {
+        e.preventDefault();
+        if (e.dataTransfer.files.length > 0) {
+            loadFile(e.dataTransfer.files[0]);
+            input.files = e.dataTransfer.files; // inputにも反映
+        }
+    });
+
+    // 保存ボタン
+    saveBtn.addEventListener('click', saveImage);
+    
+    // エンターキーで保存
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && cropper) {
+            saveImage();
+        }
+    });
+
+    function loadFile(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            image.src = e.target.result;
+            
+            // Exif情報の取得とファイル名セット
+            EXIF.getData(file, function() {
+                const date = EXIF.getTag(this, "DateTimeOriginal");
+                if (date) {
+                    // "2025:12:21 10:00:00" -> "20251221"
+                    const formattedDate = date.split(' ')[0].replace(/:/g, '');
+                    filenameInput.value = formattedDate;
+                } else {
+                    // Exifがない場合は空、または必要なら今日の日付を入れる
+                    // filenameInput.value = new Date().toISOString().slice(0,10).replace(/-/g,"");
+                    filenameInput.value = ""; 
+                    filenameInput.focus(); // 手動入力を促す
+                }
+            });
+
+            if (cropper) {
+                cropper.destroy();
+            }
+            
+            // Cropperの起動
+            cropper = new Cropper(image, {
+                aspectRatio: 4 / 3, // 比率固定
+                viewMode: 1,        // 画像の枠外には出さない
+                dragMode: 'move',   // 画像自体を動かすか、枠を動かすか
+                autoCropArea: 0.8,  // 初期表示の枠の大きさ
+                toggleDragModeOnDblclick: false,
+                
+                // キーボード操作の微調整（Macのプレビューに近い操作感へ）
+                ready: function() {
+                    // 読み込み完了時にコンテナにフォーカスを当てるなど必要なら
+                }
+            });
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function saveImage() {
+        if (!cropper) return;
+        
+        let filename = filenameInput.value.trim();
+        if (!filename) {
+            alert("ファイル名（日付）を入力してください");
+            filenameInput.focus();
+            return;
+        }
+
+        // ここで魔法をかける：切り抜き範囲を強制的に640x480にリサイズして書き出す
+        const canvas = cropper.getCroppedCanvas({
+            width: 640,
+            height: 480,
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: 'high'
+        });
+
+        canvas.toBlob((blob) => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename + '.jpeg';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 'image/jpeg', 0.9); // JPEG品質 0.9
+    }
+</script>
+
+</body>
+</html>

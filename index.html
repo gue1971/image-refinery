@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Refinery (v5.2 Fixed)</title>
+    <title>Image Refinery (v6.0 Ratio Modal)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
@@ -20,11 +20,10 @@
             overflow: hidden;
         }
 
-        /* --- メインエリアのレイアウト --- */
+        /* --- メインエリア --- */
         .img-container {
             flex-grow: 1;
             width: 100%;
-            /* コントロールパネルの分を引く(大体の高さ) */
             height: calc(100vh - 140px);
             background: #000;
             overflow: hidden;
@@ -32,8 +31,7 @@
         }
         .placeholder {
             position: absolute;
-            top: 50%;
-            left: 50%;
+            top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             color: #666;
             text-align: center;
@@ -41,7 +39,7 @@
             z-index: 0;
         }
 
-        /* --- ガラス風コントロールパネル --- */
+        /* --- コントロールパネル --- */
         .controls-panel-custom {
             width: 100%;
             padding: 15px 20px;
@@ -49,105 +47,60 @@
             background: #333;
             border-bottom: 1px solid #444;
             display: flex;
-            flex-wrap: wrap; /* スマホ対応 */
+            flex-wrap: wrap;
             align-items: center;
             justify-content: center;
             gap: 15px;
             z-index: 10;
         }
 
-        /* ガラス風共通クラス */
-        .glass-panel, .glass-btn {
+        /* ガラス風共通 */
+        .glass-btn {
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
             border: 1px solid rgba(255, 255, 255, 0.2);
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        /* 1. ファイル選択ボタン */
-        .file-upload-wrapper input[type="file"] {
-            display: none;
-        }
-
-        .custom-file-upload {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 10px 20px;
+            color: #fff;
             border-radius: 8px;
             cursor: pointer;
-            font-weight: bold;
-            color: #fff;
-            background: rgba(255, 255, 255, 0.1);
             transition: all 0.2s;
-            height: 40px;
-            box-sizing: border-box;
         }
-
-        .custom-file-upload:hover {
+        .glass-btn:hover {
             background: rgba(255, 255, 255, 0.2);
             transform: translateY(-1px);
         }
 
-        .custom-file-upload .icon {
-            margin-right: 8px;
-        }
-
-        /* 2. 比率選択チップ */
-        .aspect-ratio-selector {
+        /* 1. ファイル選択 */
+        .file-upload-wrapper input[type="file"] { display: none; }
+        .custom-file-upload {
             display: flex;
             align-items: center;
-            padding: 5px 15px;
-            border-radius: 8px;
+            padding: 10px 20px;
             height: 40px;
             box-sizing: border-box;
-        }
-
-        .ratio-options {
-            display: flex;
-            gap: 5px;
-            align-items: center;
-        }
-        
-        .ratio-label-text {
-            margin-right: 10px;
-            font-size: 0.9rem;
-            color: #aaa;
-        }
-
-        .ratio-chip {
-            position: relative;
-            cursor: pointer;
-            margin: 0;
-        }
-
-        .ratio-chip input {
-            display: none;
-        }
-
-        .ratio-chip span {
-            display: block;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            background: rgba(0, 0, 0, 0.3);
-            color: #ccc;
-            transition: all 0.2s ease;
-        }
-
-        .ratio-chip input:checked + span {
-            background: #fff;
-            color: #222;
             font-weight: bold;
-            box-shadow: 0 2px 8px rgba(255,255,255,0.2);
         }
-        
-        /* 3. 保存(次へ)ボタン */
+
+        /* 2. 比率表示エリア (ボタン化) */
+        .ratio-display-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+            height: 40px;
+            min-width: 160px; /* 少し幅広に */
+            text-align: left;
+            font-size: 0.9rem;
+        }
+        .ratio-value { font-weight: bold; font-size: 1.1rem; margin-right: 8px; }
+        .ratio-desc { font-size: 0.8rem; color: #aaa; }
+        .ratio-icon { margin-left: 10px; font-size: 0.8rem; color: #888; }
+
+        /* 3. 保存ボタン */
         .save-btn {
             background: linear-gradient(135deg, #007bff, #0056b3);
-            color: white;
             border: none;
+            color: white;
             padding: 0 25px;
             height: 40px;
             border-radius: 8px;
@@ -155,35 +108,18 @@
             cursor: pointer;
             display: flex;
             align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
         }
-        .save-btn:hover {
-            filter: brightness(1.1);
-            transform: translateY(-1px);
-        }
+        .save-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
 
-        /* --- モーダル用スタイル (既存維持) --- */
-        input, select {
-            font-size: 16px;
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px solid #555;
-            background: #222;
-            color: #fff;
-        }
-        input:focus {
-            border-color: #007bff;
-            outline: none;
-        }
 
+        /* --- モーダル共通 --- */
         .modal-overlay {
             display: none;
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.85);
-            z-index: 1000;
+            z-index: 2000;
             justify-content: center;
             align-items: center;
             backdrop-filter: blur(5px);
@@ -193,88 +129,84 @@
             padding: 25px;
             border-radius: 12px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-            width: 360px;
-            text-align: center;
+            width: 380px;
+            max-width: 90%;
             border: 1px solid #444;
+            max-height: 80vh;
+            overflow-y: auto;
         }
         .modal h3 {
-            margin-top: 0;
-            margin-bottom: 20px;
-            color: #fff;
-            font-size: 18px;
-            border-bottom: 1px solid #444;
-            padding-bottom: 15px;
+            margin-top: 0; margin-bottom: 20px;
+            color: #fff; font-size: 18px;
+            border-bottom: 1px solid #444; padding-bottom: 15px;
         }
-        
-        .size-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+
+        /* --- 比率選択モーダルの中身 --- */
+        .ratio-list {
+            display: flex;
+            flex-direction: column;
             gap: 10px;
-            margin-bottom: 20px;
         }
-        .size-btn {
+        .ratio-item {
             background: #3a3a3a;
             border: 1px solid #444;
-            padding: 12px;
-            color: #ccc;
+            padding: 12px 15px;
+            border-radius: 8px;
             cursor: pointer;
-            border-radius: 6px;
-            font-size: 14px;
-            transition: background 0.1s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
         }
-        .size-btn:hover, .size-btn.active {
-            background: #007bff;
-            border-color: #007bff;
-            color: #fff;
-        }
+        .ratio-item:hover { background: #4a4a4a; border-color: #666; }
+        .ratio-item.active { border-color: #007bff; background: #334; }
         
-        .custom-size-area {
-            background: #1a1a1a;
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
+        .ratio-item-main { font-weight: bold; font-size: 1.1rem; color: #fff; }
+        .ratio-item-sub { font-size: 0.85rem; color: #aaa; }
+
+        /* カスタム入力エリア */
+        .custom-ratio-area {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #444;
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 8px;
-            border: 1px solid #333;
-        }
-        .custom-input {
-            width: 70px;
-            text-align: center;
-        }
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
-            -webkit-appearance: none; margin: 0; 
-        }
-
-        .filename-input {
-            width: 100%;
-            box-sizing: border-box;
-            margin-bottom: 20px;
-            text-align: center;
-            font-size: 18px;
-            padding: 10px;
-        }
-
-        .modal-actions {
-            display: flex;
             justify-content: space-between;
             gap: 10px;
         }
-        .action-btn {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
+        .custom-ratio-inputs { display: flex; align-items: center; gap: 5px; }
+        .ratio-input-box {
+            width: 50px;
+            background: #222;
+            border: 1px solid #555;
+            color: #fff;
+            padding: 8px;
+            border-radius: 4px;
+            text-align: center;
         }
-        .cancel-btn { background: #555; color: #ddd; }
-        .cancel-btn:hover { background: #666; }
-        .confirm-btn { background: #28a745; color: white; }
-        .confirm-btn:hover { background: #218838; }
 
+        /* --- サイズ・保存モーダル用 (既存) --- */
+        .size-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .size-btn {
+            background: #3a3a3a; border: 1px solid #444; padding: 12px;
+            color: #ccc; cursor: pointer; border-radius: 6px; text-align: center;
+        }
+        .size-btn:hover, .size-btn.active { background: #007bff; color: #fff; border-color: #007bff; }
+        
+        .custom-size-area {
+            background: #1a1a1a; padding: 15px; border-radius: 6px;
+            margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid #333;
+        }
+        .modal-actions { display: flex; gap: 10px; margin-top: 20px;}
+        .action-btn { flex: 1; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .cancel-btn { background: #555; color: #ddd; }
+        .confirm-btn { background: #28a745; color: white; }
+        
+        .filename-input {
+            width: 100%; box-sizing: border-box; margin-bottom: 20px;
+            text-align: center; font-size: 18px; padding: 10px;
+            background: #222; border: 1px solid #555; color: #fff; border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -282,45 +214,78 @@
 <div class="controls-panel-custom">
     
     <div class="file-upload-wrapper">
-        <label for="imageUpload" class="custom-file-upload">
-            <span class="icon">📂</span>
+        <label for="imageUpload" class="custom-file-upload glass-btn">
+            <span style="margin-right:8px;">📂</span>
             <span>画像を選択</span>
         </label>
         <input type="file" id="imageUpload" accept="image/*">
     </div>
 
-    <div class="aspect-ratio-selector glass-panel">
-        <span class="ratio-label-text">比率:</span>
-        <div class="ratio-options">
-            <label class="ratio-chip">
-                <input type="radio" name="aspectRatio" value="1" checked>
-                <span>1:1</span>
-            </label>
-            <label class="ratio-chip">
-                <input type="radio" name="aspectRatio" value="1.91">
-                <span>1.91:1</span>
-            </label>
-            <label class="ratio-chip">
-                <input type="radio" name="aspectRatio" value="0.8">
-                <span>4:5</span>
-            </label>
-            <label class="ratio-chip">
-                <input type="radio" name="aspectRatio" value="free">
-                <span>Free</span>
-            </label>
+    <div id="openRatioModalBtn" class="ratio-display-btn glass-btn">
+        <div>
+            <span id="currentRatioValue" class="ratio-value">4:3</span>
+            <span id="currentRatioDesc" class="ratio-desc">馬・写真用</span>
         </div>
+        <span class="ratio-icon">▼</span>
     </div>
 
     <button id="nextBtn" class="save-btn">
         保存へ進む
     </button>
-
 </div>
 
 <div class="img-container">
     <div class="placeholder">画像をドラッグ＆ドロップ<br>またはファイルを選択</div>
     <img id="image" style="max-width: 100%; display: block; opacity: 0;">
 </div>
+
+
+<div id="ratioModal" class="modal-overlay">
+    <div class="modal">
+        <h3>トリミング比率を選択</h3>
+        
+        <div class="ratio-list">
+            <div class="ratio-item" data-ratio="1.33333" data-text="4:3" data-desc="馬・写真用 (標準)">
+                <span class="ratio-item-main">4 : 3</span>
+                <span class="ratio-item-sub">馬の立ち姿・標準写真</span>
+            </div>
+            <div class="ratio-item" data-ratio="1" data-text="1:1" data-desc="スクエア">
+                <span class="ratio-item-main">1 : 1</span>
+                <span class="ratio-item-sub">アイコン・Instagram</span>
+            </div>
+            <div class="ratio-item" data-ratio="0.8" data-text="4:5" data-desc="スマホ縦長">
+                <span class="ratio-item-main">4 : 5</span>
+                <span class="ratio-item-sub">タイムライン・ポートレート</span>
+            </div>
+            <div class="ratio-item" data-ratio="1.77777" data-text="16:9" data-desc="ワイド">
+                <span class="ratio-item-main">16 : 9</span>
+                <span class="ratio-item-sub">PC・動画・Youtube</span>
+            </div>
+            <div class="ratio-item" data-ratio="0.5625" data-text="9:16" data-desc="全画面">
+                <span class="ratio-item-main">9 : 16</span>
+                <span class="ratio-item-sub">ストーリー・スマホ壁紙</span>
+            </div>
+            <div class="ratio-item" data-ratio="NaN" data-text="Free" data-desc="自由変形">
+                <span class="ratio-item-main">Free</span>
+                <span class="ratio-item-sub">制限なし</span>
+            </div>
+        </div>
+
+        <div class="custom-ratio-area">
+            <div class="custom-ratio-inputs">
+                <input type="number" id="ratioInputW" class="ratio-input-box" placeholder="W" min="1">
+                <span>:</span>
+                <input type="number" id="ratioInputH" class="ratio-input-box" placeholder="H" min="1">
+            </div>
+            <button id="applyCustomRatio" class="action-btn confirm-btn" style="padding: 8px 15px; font-size:0.9rem;">適用</button>
+        </div>
+
+        <div class="modal-actions">
+            <button id="closeRatioModal" class="action-btn cancel-btn">閉じる</button>
+        </div>
+    </div>
+</div>
+
 
 <div id="sizeModal" class="modal-overlay">
     <div class="modal">
@@ -329,15 +294,15 @@
         
         <div class="custom-size-area">
             <span style="font-size:12px; color:#aaa;">カスタム:</span>
-            <input type="number" id="customW" class="custom-input" placeholder="W" min="10">
+            <input type="number" id="customW" class="ratio-input-box" style="width:70px;" placeholder="W">
             <span>x</span>
-            <input type="number" id="customH" class="custom-input" placeholder="H" min="10">
+            <input type="number" id="customH" class="ratio-input-box" style="width:70px;" placeholder="H">
             <span style="font-size:12px; color:#aaa;">px</span>
         </div>
 
         <div class="modal-actions">
             <button class="action-btn cancel-btn" id="sizeCancel">戻る</button>
-            <button class="action-btn confirm-btn" id="sizeConfirm">決定 (Enter)</button>
+            <button class="action-btn confirm-btn" id="sizeConfirm">決定</button>
         </div>
     </div>
 </div>
@@ -350,22 +315,29 @@
 
         <div class="modal-actions">
             <button class="action-btn cancel-btn" id="nameCancel">戻る</button>
-            <button class="action-btn confirm-btn" id="nameConfirm">実行 (Enter)</button>
+            <button class="action-btn confirm-btn" id="nameConfirm">保存実行</button>
         </div>
     </div>
 </div>
 
 <script>
-    // 要素取得
+    // --- 要素取得 ---
     const image = document.getElementById('image');
-    // 修正: HTMLのIDに合わせて取得
-    const input = document.getElementById('imageUpload'); 
+    const input = document.getElementById('imageUpload');
     const nextBtn = document.getElementById('nextBtn');
     
-    // ラジオボタン群の取得
-    const ratioRadios = document.querySelectorAll('input[name="aspectRatio"]');
+    // 比率関連
+    const openRatioModalBtn = document.getElementById('openRatioModalBtn');
+    const ratioModal = document.getElementById('ratioModal');
+    const closeRatioModal = document.getElementById('closeRatioModal');
+    const currentRatioValue = document.getElementById('currentRatioValue');
+    const currentRatioDesc = document.getElementById('currentRatioDesc');
+    const ratioItems = document.querySelectorAll('.ratio-item');
+    const ratioInputW = document.getElementById('ratioInputW');
+    const ratioInputH = document.getElementById('ratioInputH');
+    const applyCustomRatio = document.getElementById('applyCustomRatio');
 
-    // モーダル要素
+    // 保存モーダル関連
     const sizeModal = document.getElementById('sizeModal');
     const nameModal = document.getElementById('nameModal');
     const sizeOptions = document.getElementById('sizeOptions');
@@ -384,6 +356,9 @@
     let originalBaseName = "";
     let exifDateName = "";
 
+    // ★デフォルト設定 (4:3)
+    let currentAspectRatio = 1.33333; 
+
     // ---------------------------
     // 画像ロード & 初期化
     // ---------------------------
@@ -396,12 +371,11 @@
         e.preventDefault();
         if (e.dataTransfer.files.length > 0) {
             loadFile(e.dataTransfer.files[0]);
-            input.files = e.dataTransfer.files; // inputにもセットしておく
+            input.files = e.dataTransfer.files; 
         }
     });
 
     function loadFile(file) {
-        // 名前処理
         const nameParts = file.name.split('.');
         if (nameParts.length > 1) nameParts.pop();
         originalBaseName = nameParts.join('.');
@@ -409,9 +383,8 @@
         const reader = new FileReader();
         reader.onload = (e) => {
             image.src = e.target.result;
-            image.style.opacity = 1; // 読み込んだら表示
+            image.style.opacity = 1; 
             
-            // EXIF日付取得
             exifDateName = ""; 
             EXIF.getData(file, function() {
                 const date = EXIF.getTag(this, "DateTimeOriginal");
@@ -422,13 +395,9 @@
 
             if (cropper) cropper.destroy();
 
-            // 選択中のラジオボタンの値を取得
-            const checkedRadio = document.querySelector('input[name="aspectRatio"]:checked');
-            const initialVal = checkedRadio ? checkedRadio.value : '1';
-            const initialRatio = (initialVal === 'free') ? NaN : parseFloat(initialVal);
-
+            // デフォルトの4:3で起動
             cropper = new Cropper(image, {
-                aspectRatio: initialRatio,
+                aspectRatio: currentAspectRatio, 
                 viewMode: 1, 
                 dragMode: 'move',
                 autoCropArea: 0.9,
@@ -442,55 +411,95 @@
     }
 
     // ---------------------------
-    // 比率変更ロジック (中心維持)
+    // ★ 比率変更モーダル & 中心維持ロジック
     // ---------------------------
-    ratioRadios.forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            if (!cropper) return;
+    
+    // モーダルを開く
+    openRatioModalBtn.addEventListener('click', () => {
+        if(!cropper) { alert("画像を読み込んでください"); return; }
+        ratioModal.style.display = 'flex';
+    });
 
-            const value = e.target.value;
+    // モーダルを閉じる
+    closeRatioModal.addEventListener('click', () => {
+        ratioModal.style.display = 'none';
+    });
+
+    // リストから選択した時の処理
+    ratioItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const val = parseFloat(item.dataset.ratio); // FreeはNaNになる
+            const text = item.dataset.text;
+            const desc = item.dataset.desc;
             
-            // Freeの場合
-            if (value === 'free') {
-                cropper.setAspectRatio(NaN);
-                return;
-            }
-
-            const newRatio = parseFloat(value);
-
-            // --- 中心維持計算 ---
-            const currentData = cropper.getData();
-            const centerX = currentData.x + (currentData.width / 2);
-            const centerY = currentData.y + (currentData.height / 2);
-
-            cropper.setAspectRatio(newRatio);
-
-            // 現在の「幅」を基準に高さを再計算
-            const newWidth = currentData.width;
-            const newHeight = newWidth / newRatio;
-
-            const newX = centerX - (newWidth / 2);
-            const newY = centerY - (newHeight / 2);
-
-            cropper.setData({
-                x: newX,
-                y: newY,
-                width: newWidth,
-                height: newHeight
-            });
+            applyRatio(val, text, desc);
         });
     });
 
+    // カスタム比率適用
+    applyCustomRatio.addEventListener('click', () => {
+        const w = parseFloat(ratioInputW.value);
+        const h = parseFloat(ratioInputH.value);
+        
+        if (w > 0 && h > 0) {
+            const val = w / h;
+            const text = `${w}:${h}`;
+            const desc = "カスタム";
+            applyRatio(val, text, desc);
+        } else {
+            alert("数値を入力してください");
+        }
+    });
+
+    // 共通の適用関数（中心維持ロジック込み）
+    function applyRatio(newRatio, text, desc) {
+        if (!cropper) return;
+
+        // UI表示更新
+        currentRatioValue.innerText = text;
+        currentRatioDesc.innerText = desc;
+        currentAspectRatio = newRatio;
+
+        // Freeの場合
+        if (isNaN(newRatio)) {
+            cropper.setAspectRatio(NaN);
+            ratioModal.style.display = 'none';
+            return;
+        }
+
+        // --- 中心維持計算 ---
+        const currentData = cropper.getData();
+        const centerX = currentData.x + (currentData.width / 2);
+        const centerY = currentData.y + (currentData.height / 2);
+
+        cropper.setAspectRatio(newRatio);
+
+        // 現在の「幅」を基準に高さを再計算
+        const newWidth = currentData.width;
+        const newHeight = newWidth / newRatio;
+
+        const newX = centerX - (newWidth / 2);
+        const newY = centerY - (newHeight / 2);
+
+        cropper.setData({
+            x: newX,
+            y: newY,
+            width: newWidth,
+            height: newHeight
+        });
+
+        // モーダル閉じる
+        ratioModal.style.display = 'none';
+    }
+
+
     // ---------------------------
-    // Step 1: メイン画面 -> サイズ選択
+    // 保存フロー (Step1 サイズ -> Step2 名前)
     // ---------------------------
     nextBtn.addEventListener('click', openSizeModal);
 
     function openSizeModal() {
-        if (!cropper) {
-            alert("画像を読み込んでください");
-            return;
-        }
+        if (!cropper) { alert("画像を読み込んでください"); return; }
         
         currentPhase = 'size';
         sizeModal.style.display = 'flex';
@@ -501,29 +510,23 @@
         const currentRatio = currentW / currentH;
 
         sizeOptions.innerHTML = '';
-        
         selectedSize = null; 
         customW.value = currentW; 
         customH.value = currentH;
 
-        // ボタン作成
+        // 原寸ボタン
         createSizeBtn(`そのまま\n${currentW} x ${currentH}`, {width: currentW, height: currentH}, true);
 
-        const presets = [640, 800, 1024, 1280];
+        // プリセット
+        const presets = [640, 800, 1024, 1280, 1920];
         presets.forEach(w => {
             const h = Math.round(w / currentRatio);
             createSizeBtn(`幅 ${w}px\n${w} x ${h}`, {width: w, height: h}, false);
         });
 
-        // カスタム入力連動
+        // カスタム連動
         const updateCustom = (isWidthChanged) => {
             document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
-            
-            let wVal = customW.value;
-            let hVal = customH.value;
-            if(wVal < 0) customW.value = Math.abs(wVal);
-            if(hVal < 0) customH.value = Math.abs(hVal);
-
             if (isWidthChanged) {
                 const w = parseFloat(customW.value);
                 if (w > 0) customH.value = Math.round(w / currentRatio);
@@ -531,26 +534,12 @@
                 const h = parseFloat(customH.value);
                 if (h > 0) customW.value = Math.round(h * currentRatio);
             }
-            
             if (customW.value && customH.value) {
-                selectedSize = {
-                    width: parseInt(customW.value),
-                    height: parseInt(customH.value)
-                };
+                selectedSize = { width: parseInt(customW.value), height: parseInt(customH.value) };
             }
         };
-
         customW.oninput = () => updateCustom(true);
         customH.oninput = () => updateCustom(false);
-        
-        [customW, customH].forEach(input => {
-            input.addEventListener('keydown', (e) => {
-                if(e.key === '-' || e.key === 'e') e.preventDefault();
-            });
-            input.addEventListener('focus', function() { this.select(); });
-        });
-
-        sizeConfirm.focus();
     }
 
     function createSizeBtn(text, sizeVal, isActive) {
@@ -558,7 +547,6 @@
         btn.className = 'size-btn';
         if (isActive) btn.classList.add('active');
         btn.innerText = text;
-        
         btn.addEventListener('click', () => {
             document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
@@ -577,23 +565,14 @@
     });
 
     sizeConfirm.addEventListener('click', () => {
-        if (selectedSize) {
-            if (selectedSize.width < 10 || selectedSize.height < 10) {
-                alert("サイズが小さすぎます");
-                return;
-            }
-        }
         openNameModal();
     });
 
-    // ---------------------------
-    // Step 2: ファイル名入力
-    // ---------------------------
+    // Step 2 名前
     function openNameModal() {
         sizeModal.style.display = 'none';
         nameModal.style.display = 'flex';
         currentPhase = 'name';
-
         const defaultName = exifDateName || originalBaseName || "image";
         filenameInput.value = defaultName;
         filenameInput.focus();
@@ -609,58 +588,41 @@
     nameConfirm.addEventListener('click', executeSave);
 
     // ---------------------------
-    // キーボード制御 & 保存実行
+    // キーボード & 矢印操作
     // ---------------------------
     document.addEventListener('keydown', (e) => {
         if (e.isComposing) return;
 
         if (e.key === 'Enter') {
-            e.preventDefault();
-            if (currentPhase === 'main' && cropper) {
-                openSizeModal();
-            } else if (currentPhase === 'size') {
-                if (document.activeElement === customW || document.activeElement === customH) {
-                    customW.blur(); customH.blur();
-                }
-                sizeConfirm.click();
-            } else if (currentPhase === 'name') {
-                executeSave();
-            }
+            if (currentPhase === 'name') executeSave();
+            else if (currentPhase === 'size') sizeConfirm.click();
             return;
         }
-
         if (e.key === 'Escape') {
             if (currentPhase === 'name') nameCancel.click();
             else if (currentPhase === 'size') sizeCancel.click();
+            else if (ratioModal.style.display === 'flex') closeRatioModal.click();
             return;
         }
 
-        // 矢印キーで微調整
-        if (currentPhase === 'main' && cropper) {
+        // 矢印微調整
+        if (currentPhase === 'main' && cropper && ratioModal.style.display !== 'flex') {
             if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
                 e.preventDefault();
                 let data = cropper.getData();
                 const shift = e.shiftKey;
-                const resizeStep = 4; 
-                const moveStep = 1;
+                const resizeStep = 4; const moveStep = 1;
 
                 if (shift) {
-                    // サイズ変更
                     const currentRatio = data.width / data.height;
-                    let deltaW = 0;
-                    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') deltaW = resizeStep;
-                    else deltaW = -resizeStep;
-                    
+                    let deltaW = (e.key === 'ArrowRight' || e.key === 'ArrowUp') ? resizeStep : -resizeStep;
                     let deltaH = deltaW / currentRatio;
-                    if (data.width + deltaW > 10 && data.height + deltaH > 10) {
-                        data.width += deltaW;
-                        data.height += deltaH;
-                        data.x -= (deltaW / 2);
-                        data.y -= (deltaH / 2);
+                    if (data.width + deltaW > 10) {
+                        data.width += deltaW; data.height += deltaH;
+                        data.x -= (deltaW / 2); data.y -= (deltaH / 2);
                         cropper.setData(data);
                     }
                 } else {
-                    // 移動
                     if (e.key === 'ArrowLeft') data.x -= moveStep;
                     if (e.key === 'ArrowRight') data.x += moveStep;
                     if (e.key === 'ArrowUp') data.y -= moveStep;
@@ -673,14 +635,8 @@
 
     function executeSave() {
         if (!cropper) return;
-        
-        let filename = filenameInput.value.trim();
-        if (!filename) filename = "image";
-
-        const options = {
-            imageSmoothingEnabled: true,
-            imageSmoothingQuality: 'high'
-        };
+        let filename = filenameInput.value.trim() || "image";
+        const options = { imageSmoothingEnabled: true, imageSmoothingQuality: 'high' };
 
         if (selectedSize) {
             options.width = selectedSize.width;
@@ -688,7 +644,6 @@
         }
 
         const canvas = cropper.getCroppedCanvas(options);
-
         canvas.toBlob((blob) => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');

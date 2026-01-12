@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Image Refinery (v10.0 Logic Fix)</title>
+    <title>Image Refinery (v11.0 Organized)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
@@ -69,10 +69,9 @@
 
         .file-upload-wrapper input[type="file"] { display: none; }
         
-        /* ファイル選択ボタン (アイコンのみ) */
         .custom-file-upload {
             display: flex; align-items: center; justify-content: center;
-            padding: 0; width: 44px; height: 40px; /* 正方形に近く */
+            padding: 0; width: 44px; height: 40px; 
             box-sizing: border-box; font-weight: bold;
         }
 
@@ -123,24 +122,48 @@
             border-bottom: 1px solid #444; padding-bottom: 15px;
         }
 
-        /* 比率リスト */
-        .ratio-list { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 10px; 
-            margin-bottom: 15px; 
+        /* --- 比率リスト (グループ分け対応) --- */
+        .ratio-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px; /* グループ間の隙間 */
+            margin-bottom: 15px;
         }
+
+        .ratio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .ratio-group-header {
+            font-size: 0.85rem;
+            color: #aaa;
+            font-weight: bold;
+            border-left: 3px solid #007bff;
+            padding-left: 8px;
+            margin-bottom: 4px;
+        }
+
+        .ratio-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
         .ratio-item {
-            background: #3a3a3a; border: 1px solid #444; padding: 8px 12px;
+            background: #3a3a3a; border: 1px solid #444; padding: 10px 12px;
             border-radius: 8px; cursor: pointer; display: flex;
             align-items: center; transition: background 0.2s;
-            gap: 10px; height: 40px;
+            gap: 12px; height: 44px; /* 少し高くして余裕を持たせる */
         }
         .ratio-item:hover { background: #4a4a4a; border-color: #666; }
         
-        .ratio-info { display: flex; flex-direction: column; justify-content: center; line-height: 1.1; }
-        .ratio-item-main { font-weight: bold; font-size: 0.95rem; color: #fff; }
-        .ratio-item-sub { font-size: 0.7rem; color: #aaa; }
+        .ratio-info { display: flex; flex-direction: column; justify-content: center; line-height: 1.2; }
+        
+        /* 文字サイズ調整 */
+        .ratio-item-main { font-weight: bold; font-size: 1.05rem; color: #fff; }
+        .ratio-item-sub { font-size: 0.8rem; color: #ccc; } /* 明るく、大きく */
         
         .ratio-shape {
             display: block;
@@ -151,15 +174,15 @@
 
         /* カスタム入力エリア */
         .custom-ratio-area {
-            border-top: 1px solid #444; padding-top: 15px;
+            border-top: 1px solid #444; padding-top: 20px; margin-top: 10px;
         }
         .custom-inputs-row {
             display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px;
         }
         .ratio-input-box {
-            width: 70px; background: #222; border: 1px solid #555;
-            color: #fff; padding: 10px; border-radius: 4px; text-align: center;
-            font-size: 1.1rem; font-weight: bold;
+            width: 75px; background: #222; border: 1px solid #555;
+            color: #fff; padding: 12px; border-radius: 4px; text-align: center;
+            font-size: 1.2rem; font-weight: bold;
             cursor: pointer;
         }
         .ratio-input-box[readonly] {
@@ -257,64 +280,78 @@
 <div id="ratioModal" class="modal-overlay">
     <div class="modal">
         <h3>トリミング比率を選択</h3>
-        <div class="ratio-list">
-            
-            <div class="ratio-item" data-ratio="1.77777" data-text="16:9">
-                <span class="ratio-shape" style="width:20px; height:11px;"></span>
-                <div class="ratio-info">
-                    <span class="ratio-item-main">16 : 9</span>
-                    <span class="ratio-item-sub">Youtube</span>
-                </div>
-            </div>
-            <div class="ratio-item" data-ratio="1.33333" data-text="4:3">
-                <span class="ratio-shape" style="width:18px; height:13.5px;"></span>
-                <div class="ratio-info">
-                    <span class="ratio-item-main">4 : 3</span>
-                    <span class="ratio-item-sub">Photo</span>
-                </div>
-            </div>
-
-            <div class="ratio-item" data-ratio="1" data-text="1:1">
-                <span class="ratio-shape" style="width:16px; height:16px;"></span>
-                <div class="ratio-info">
-                    <span class="ratio-item-main">1 : 1</span>
-                    <span class="ratio-item-sub">Square</span>
-                </div>
-            </div>
-            <div class="ratio-item" data-ratio="NaN" data-text="Free">
-                <span class="ratio-shape" style="width:16px; height:16px; border-style:dashed;"></span>
-                <div class="ratio-info">
-                    <span class="ratio-item-main">Free</span>
-                    <span class="ratio-item-sub">自由</span>
+        
+        <div class="ratio-container">
+            <div class="ratio-group">
+                <div class="ratio-group-header">横長 (Landscape)</div>
+                <div class="ratio-grid">
+                    <div class="ratio-item" data-ratio="1.33333" data-text="4:3">
+                        <span class="ratio-shape" style="width:18px; height:13.5px;"></span>
+                        <div class="ratio-info">
+                            <span class="ratio-item-main">4 : 3</span>
+                            <span class="ratio-item-sub">写真 (Photo)</span>
+                        </div>
+                    </div>
+                    <div class="ratio-item" data-ratio="1.77777" data-text="16:9">
+                        <span class="ratio-shape" style="width:20px; height:11px;"></span>
+                        <div class="ratio-info">
+                            <span class="ratio-item-main">16 : 9</span>
+                            <span class="ratio-item-sub">動画 (Wide)</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="ratio-item" data-ratio="0.75" data-text="3:4">
-                <span class="ratio-shape" style="width:13.5px; height:18px;"></span>
-                <div class="ratio-info">
-                    <span class="ratio-item-main">3 : 4</span>
-                    <span class="ratio-item-sub">Photo</span>
+            <div class="ratio-group">
+                <div class="ratio-group-header">縦長 (Portrait)</div>
+                <div class="ratio-grid">
+                    <div class="ratio-item" data-ratio="0.75" data-text="3:4">
+                        <span class="ratio-shape" style="width:13.5px; height:18px;"></span>
+                        <div class="ratio-info">
+                            <span class="ratio-item-main">3 : 4</span>
+                            <span class="ratio-item-sub">写真 (Photo)</span>
+                        </div>
+                    </div>
+                    <div class="ratio-item" data-ratio="0.8" data-text="4:5">
+                        <span class="ratio-shape" style="width:13px; height:16px;"></span>
+                        <div class="ratio-info">
+                            <span class="ratio-item-main">4 : 5</span>
+                            <span class="ratio-item-sub">SNS (Feed)</span>
+                        </div>
+                    </div>
+                    <div class="ratio-item" data-ratio="0.5625" data-text="9:16">
+                        <span class="ratio-shape" style="width:11px; height:20px;"></span>
+                        <div class="ratio-info">
+                            <span class="ratio-item-main">9 : 16</span>
+                            <span class="ratio-item-sub">全画面 (Story)</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="ratio-item" data-ratio="0.8" data-text="4:5">
-                <span class="ratio-shape" style="width:13px; height:16px;"></span>
-                <div class="ratio-info">
-                    <span class="ratio-item-main">4 : 5</span>
-                    <span class="ratio-item-sub">Insta</span>
+
+            <div class="ratio-group">
+                <div class="ratio-group-header">スクエア・フリー (Square / Free)</div>
+                <div class="ratio-grid">
+                    <div class="ratio-item" data-ratio="1" data-text="1:1">
+                        <span class="ratio-shape" style="width:16px; height:16px;"></span>
+                        <div class="ratio-info">
+                            <span class="ratio-item-main">1 : 1</span>
+                            <span class="ratio-item-sub">正方形 (Icon)</span>
+                        </div>
+                    </div>
+                    <div class="ratio-item" data-ratio="NaN" data-text="Free">
+                        <span class="ratio-shape" style="width:16px; height:16px; border-style:dashed;"></span>
+                        <div class="ratio-info">
+                            <span class="ratio-item-main">Free</span>
+                            <span class="ratio-item-sub">自由変形</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="ratio-item" data-ratio="0.5625" data-text="9:16">
-                <span class="ratio-shape" style="width:11px; height:20px;"></span>
-                <div class="ratio-info">
-                    <span class="ratio-item-main">9 : 16</span>
-                    <span class="ratio-item-sub">Story</span>
-                </div>
-            </div>
-            <div class="ratio-item" style="visibility:hidden; pointer-events:none;"></div>
         </div>
 
         <div class="custom-ratio-area">
-            <div style="font-size:12px; color:#aaa; margin-bottom:8px; text-align:center;">カスタム比率入力 (W : H)</div>
+            <div style="font-size:0.85rem; color:#ccc; margin-bottom:8px; text-align:center; font-weight:bold;">カスタム比率入力 (W : H)</div>
             <div class="custom-inputs-row">
                 <input type="number" id="ratioInputW" class="ratio-input-box numpad-target" placeholder="W" min="1" readonly>
                 <span>:</span>
@@ -343,7 +380,7 @@
         <div id="sizeOptions" class="size-grid"></div>
         
         <div class="custom-ratio-area" style="border-top:none; padding-top:0;">
-            <div style="font-size:12px; color:#aaa; margin-bottom:8px; text-align:center;">カスタムサイズ (px)</div>
+            <div style="font-size:0.85rem; color:#ccc; margin-bottom:8px; text-align:center; font-weight:bold;">カスタムサイズ (px)</div>
             <div class="custom-inputs-row">
                 <input type="number" id="customW" class="ratio-input-box numpad-target" style="width:80px;" placeholder="W" readonly>
                 <span>x</span>
@@ -606,7 +643,6 @@
         const currentW = Math.round(data.width);
         const currentH = Math.round(data.height);
         
-        // ★ 気持ち悪い数字対策: Free以外は「真の比率」を使って計算
         const effectiveRatio = isNaN(currentAspectRatio) ? (data.width / data.height) : currentAspectRatio;
 
         sizeOptions.innerHTML = '';
@@ -616,7 +652,6 @@
 
         createSizeBtn(`${currentW} x ${currentH}`, {width: currentW, height: currentH}, true);
 
-        // 候補: 512, 1080 追加
         const presets = [512, 640, 800, 1024, 1080, 1280];
         presets.forEach(w => {
             const h = Math.round(w / effectiveRatio);

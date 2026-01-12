@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Refinery (v3.2)</title>
+    <title>Image Refinery (v3.3)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
@@ -19,7 +19,6 @@
             height: 100vh;
             overflow: hidden;
         }
-        /* コントロールエリアを2段構成にして整理 */
         .controls {
             padding: 10px 15px;
             background: #333;
@@ -45,7 +44,7 @@
         .img-container {
             flex-grow: 1;
             width: 100%;
-            height: calc(100vh - 100px); /* コントロールの高さ分調整 */
+            height: calc(100vh - 100px);
             background: #000;
             overflow: hidden;
             position: relative;
@@ -60,8 +59,7 @@
             pointer-events: none;
         }
 
-        /* 入力周りのデザイン */
-        input[type="text"], input[type="number"], select {
+        input[type="text"], select {
             padding: 6px;
             border-radius: 4px;
             border: 1px solid #555;
@@ -70,12 +68,12 @@
             font-size: 14px;
             text-align: center;
         }
-        input[type="text"]:focus, input[type="number"]:focus, select:focus {
+        input[type="text"]:focus, select:focus {
             border-color: #007bff;
             outline: none;
         }
         
-        /* 情報表示エリア */
+        /* 情報を表示するバッジ */
         .info-badge {
             font-family: monospace;
             font-size: 13px;
@@ -84,14 +82,8 @@
             border-radius: 4px;
             color: #ccc;
         }
-        .info-label {
-            color: #888;
-            margin-right: 4px;
-        }
-        .info-val {
-            color: #fff;
-            font-weight: bold;
-        }
+        .info-label { color: #888; margin-right: 4px; }
+        .info-val { color: #fff; font-weight: bold; }
 
         button {
             padding: 6px 16px;
@@ -106,7 +98,6 @@
         }
         button:hover { background-color: #0056b3; }
 
-        /* グループ分けの区切り線 */
         .divider {
             width: 1px;
             height: 24px;
@@ -134,25 +125,18 @@
     <div class="row">
         <select id="ratioSelect" title="トリミング比率">
             <option value="1.33333" selected>比率 4:3</option>
-            <option value="1">比率 1:1 (正方形)</option>
+            <option value="1">比率 1:1</option>
             <option value="1.77777">比率 16:9</option>
             <option value="1.5">比率 3:2</option>
-            <option value="NaN">フリー (自由)</option>
+            <option value="0">フリー</option>
         </select>
 
         <div class="divider"></div>
 
-        <select id="resizePreset" title="保存時の横幅プリセット">
-            <option value="">リサイズなし (原寸)</option>
-            <option value="640">幅 640px</option>
-            <option value="800">幅 800px</option>
-            <option value="1024">幅 1024px</option>
-            <option value="1280">幅 1280px</option>
-            <option value="1920">幅 1920px</option>
-        </select>
-        <span>幅:</span>
-        <input type="number" id="outputWidth" placeholder="自動" style="width: 70px;" title="保存時の横幅（空欄なら原寸）">
-        <span>px</span>
+        <span>出力サイズ:</span>
+        <input type="text" id="sizeInput" list="sizePresets" placeholder="リサイズなし" style="width: 120px;" title="例: 640x480">
+        <datalist id="sizePresets">
+            </datalist>
 
         <div class="divider"></div>
 
@@ -173,64 +157,55 @@
     const saveBtn = document.getElementById('saveBtn');
     
     const ratioSelect = document.getElementById('ratioSelect');
-    const resizePreset = document.getElementById('resizePreset');
-    const outputWidthInput = document.getElementById('outputWidth');
+    const sizeInput = document.getElementById('sizeInput');
+    const sizePresets = document.getElementById('sizePresets');
     
     const originalSizeDisplay = document.getElementById('originalSize');
     const cropSizeDisplay = document.getElementById('cropSize');
 
     let cropper;
 
-    // リサイズプリセットを選んだら数値入力欄に反映
-    resizePreset.addEventListener('change', () => {
-        outputWidthInput.value = resizePreset.value;
-    });
-    // 数値入力欄をいじったらプリセットを「カスタム」状態（空ではないが一致もしない見た目）にする
-    outputWidthInput.addEventListener('input', () => {
-        // 必要ならここでpresetSelectの値を調整できるが、今回はそのままでOK
-    });
+    // 標準的な横幅プリセット
+    const baseWidths = [640, 800, 1024, 1280, 1600, 1920];
 
-    // 比率変更時の処理
+    // ---------------------------
+    // イベントリスナー
+    // ---------------------------
+
+    // 1. 比率が変わった時 -> プリセットを更新してCropperに反映
     ratioSelect.addEventListener('change', () => {
-        if (!cropper) return;
         const ratio = parseFloat(ratioSelect.value);
-        cropper.setAspectRatio(ratio);
+        updateSizePresets(ratio); // プリセット更新
         
-        // 比率変更時に「中央80%」に再設定する
-        // setCropBoxDataを使う手もあるが、setDataでキャンバス基準で計算するのが確実
-        setTimeout(() => {
-            const containerData = cropper.getContainerData();
-            // 画像の表示領域データ
-            const canvasData = cropper.getCanvasData();
-            
-            // 画像の中心
-            const cx = canvasData.left + (canvasData.width / 2);
-            const cy = canvasData.top + (canvasData.height / 2);
+        // 入力欄が「リサイズなし」以外で、かつ比率と合わない値が入ってたらクリアする（混乱防止）
+        // ただしユーザーが意図的に入れている可能性もあるので、とりあえず比率だけ変える
+        if (cropper) {
+            cropper.setAspectRatio(ratio);
+            fitCropBox(ratio);
+        }
+    });
 
-            // 新しい幅・高さ（画像の80%を目指す）
-            // 比率に合わせて計算が必要
-            let newWidth = canvasData.width * 0.8;
-            let newHeight = newWidth / ratio;
+    // 2. サイズ入力が変わった時 -> カスタムサイズ解析
+    sizeInput.addEventListener('change', () => {
+        const val = sizeInput.value.trim();
+        if (!val) return; // 空ならリサイズなし（何もしない）
 
-            // もし高さが画像からはみ出るなら、高さ基準で80%に合わせる
-            if (newHeight > canvasData.height * 0.8) {
-                newHeight = canvasData.height * 0.8;
-                newWidth = newHeight * ratio;
+        // "640x480" 形式などを解析
+        const match = val.match(/^(\d+)[x×,:*](\d+)$/);
+        if (match) {
+            const w = parseInt(match[1]);
+            const h = parseInt(match[2]);
+            const newRatio = w / h;
+
+            // 比率プルダウンも「フリー」か「近いもの」に変えるべきだが
+            // ここではCropperの比率を強制的に上書きして、枠を変形させる
+            if (cropper) {
+                cropper.setAspectRatio(newRatio);
+                // 必要ならratioSelectの見た目も更新するが、一旦「カスタム」扱いとしてそのまま
+                // 枠を最大化してフィット
+                fitCropBox(newRatio);
             }
-            
-            // フリー選択の場合は単純に画像の80%
-            if (isNaN(ratio)) {
-                 newWidth = canvasData.width * 0.8;
-                 newHeight = canvasData.height * 0.8;
-            }
-
-            cropper.setCropBoxData({
-                left: cx - (newWidth / 2),
-                top: cy - (newHeight / 2),
-                width: newWidth,
-                height: newHeight
-            });
-        }, 10);
+        }
     });
 
     input.addEventListener('change', (e) => {
@@ -249,8 +224,7 @@
     saveBtn.addEventListener('click', saveImage);
 
     document.addEventListener('keydown', (e) => {
-        // 入力フォーム内でのEnterは保存
-        if (['TEXT', 'NUMBER'].includes(e.target.type?.toUpperCase())) {
+        if (['TEXT'].includes(e.target.type?.toUpperCase())) {
             if (e.isComposing) return;
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -262,7 +236,7 @@
 
         if (!cropper) return;
 
-        // 矢印キー操作（前回同様）
+        // 矢印キー操作
         if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
             e.preventDefault();
             let data = cropper.getData();
@@ -271,16 +245,13 @@
             const moveStep = 1;
 
             if (shift) {
-                // アスペクト比固定のリサイズ
-                const currentRatio = data.width / data.height; // 現在の実際の比率を使う
-                
+                const currentRatio = data.width / data.height;
                 let deltaW = 0;
                 if (e.key === 'ArrowRight' || e.key === 'ArrowUp') deltaW = resizeStep;
                 else deltaW = -resizeStep;
 
                 let deltaH = deltaW / currentRatio;
-
-                // 最小サイズガード
+                
                 if (data.width + deltaW > 10 && data.height + deltaH > 10) {
                     data.width += deltaW;
                     data.height += deltaH;
@@ -303,12 +274,61 @@
         }
     });
 
+    // ---------------------------
+    // ロジック関数
+    // ---------------------------
+
+    function updateSizePresets(ratio) {
+        sizePresets.innerHTML = ''; // クリア
+        
+        // 比率が0（フリー）の場合はプリセットを作りにくいので汎用的なものだけ
+        if (ratio === 0 || isNaN(ratio)) {
+            const opt = document.createElement('option');
+            opt.value = "";
+            opt.label = "リサイズなし (原寸)";
+            sizePresets.appendChild(opt);
+            return;
+        }
+
+        // 基本幅リストから高さを計算して候補に追加
+        baseWidths.forEach(w => {
+            const h = Math.round(w / ratio);
+            const opt = document.createElement('option');
+            opt.value = `${w}x${h}`;
+            sizePresets.appendChild(opt);
+        });
+    }
+
+    function fitCropBox(ratio) {
+        // 現在のキャンバスサイズを取得して、中央80%に枠を合わせる
+        setTimeout(() => {
+            const canvasData = cropper.getCanvasData();
+            const cx = canvasData.left + (canvasData.width / 2);
+            const cy = canvasData.top + (canvasData.height / 2);
+
+            let newWidth = canvasData.width * 0.8;
+            let newHeight = newWidth / ratio;
+
+            // 高さがはみ出る場合の調整
+            if (newHeight > canvasData.height * 0.8) {
+                newHeight = canvasData.height * 0.8;
+                newWidth = newHeight * ratio;
+            }
+
+            cropper.setCropBoxData({
+                left: cx - (newWidth / 2),
+                top: cy - (newHeight / 2),
+                width: newWidth,
+                height: newHeight
+            });
+        }, 10);
+    }
+
     function loadFile(file) {
         const reader = new FileReader();
         reader.onload = (e) => {
             image.src = e.target.result;
             
-            // 画像のオリジナルの大きさを取得するためにImageオブジェクトを作る
             const tempImg = new Image();
             tempImg.onload = function() {
                 originalSizeDisplay.textContent = `${this.naturalWidth} x ${this.naturalHeight}`;
@@ -328,15 +348,16 @@
             if (cropper) cropper.destroy();
             
             const initialRatio = parseFloat(ratioSelect.value);
+            // 初期化前にプリセットも作っておく
+            updateSizePresets(initialRatio);
 
             cropper = new Cropper(image, {
                 aspectRatio: initialRatio,
                 viewMode: 1, 
                 dragMode: 'move',
-                autoCropArea: 0.8, // これで初期ロード時はおおよそ80%になる
+                autoCropArea: 0.8,
                 toggleDragModeOnDblclick: false,
                 crop: function(event) {
-                    // 切り抜き範囲が動くたびにサイズ表示を更新
                     const w = Math.round(event.detail.width);
                     const h = Math.round(event.detail.height);
                     cropSizeDisplay.textContent = `${w} x ${h}`;
@@ -359,17 +380,21 @@
             return;
         }
 
-        // 保存設定の作成
         const options = {
             imageSmoothingEnabled: true,
             imageSmoothingQuality: 'high'
         };
 
-        // 指定幅があるかチェック
-        const targetWidth = parseInt(outputWidthInput.value);
-        if (targetWidth && targetWidth > 0) {
-            options.width = targetWidth;
-            // 高さは比率におまかせ（CropperJSが自動計算するが、明示したい場合は計算する）
+        // サイズ指定の解析
+        const sizeVal = sizeInput.value.trim();
+        const match = sizeVal.match(/^(\d+)[x×,:*](\d+)$/);
+        
+        if (match) {
+            // 指定がある場合
+            options.width = parseInt(match[1]);
+            options.height = parseInt(match[2]);
+        } else {
+            // 指定がない、または不正な場合は原寸（切り抜いたままのサイズ）
         }
 
         const canvas = cropper.getCroppedCanvas(options);

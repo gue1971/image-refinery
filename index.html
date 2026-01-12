@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Image Refinery (v11.0 Organized)</title>
+    <title>Image Refinery (v12.0 Default 640)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
@@ -126,7 +126,7 @@
         .ratio-container {
             display: flex;
             flex-direction: column;
-            gap: 15px; /* グループ間の隙間 */
+            gap: 15px;
             margin-bottom: 15px;
         }
 
@@ -155,15 +155,14 @@
             background: #3a3a3a; border: 1px solid #444; padding: 10px 12px;
             border-radius: 8px; cursor: pointer; display: flex;
             align-items: center; transition: background 0.2s;
-            gap: 12px; height: 44px; /* 少し高くして余裕を持たせる */
+            gap: 12px; height: 44px;
         }
         .ratio-item:hover { background: #4a4a4a; border-color: #666; }
         
         .ratio-info { display: flex; flex-direction: column; justify-content: center; line-height: 1.2; }
         
-        /* 文字サイズ調整 */
         .ratio-item-main { font-weight: bold; font-size: 1.05rem; color: #fff; }
-        .ratio-item-sub { font-size: 0.8rem; color: #ccc; } /* 明るく、大きく */
+        .ratio-item-sub { font-size: 0.8rem; color: #ccc; }
         
         .ratio-shape {
             display: block;
@@ -283,7 +282,7 @@
         
         <div class="ratio-container">
             <div class="ratio-group">
-                <div class="ratio-group-header">横長 (Landscape)</div>
+                <div class="ratio-group-header">ランドスケープ</div>
                 <div class="ratio-grid">
                     <div class="ratio-item" data-ratio="1.33333" data-text="4:3">
                         <span class="ratio-shape" style="width:18px; height:13.5px;"></span>
@@ -303,7 +302,7 @@
             </div>
 
             <div class="ratio-group">
-                <div class="ratio-group-header">縦長 (Portrait)</div>
+                <div class="ratio-group-header">ポートレート</div>
                 <div class="ratio-grid">
                     <div class="ratio-item" data-ratio="0.75" data-text="3:4">
                         <span class="ratio-shape" style="width:13.5px; height:18px;"></span>
@@ -330,7 +329,7 @@
             </div>
 
             <div class="ratio-group">
-                <div class="ratio-group-header">スクエア・フリー (Square / Free)</div>
+                <div class="ratio-group-header">スクエア・フリー</div>
                 <div class="ratio-grid">
                     <div class="ratio-item" data-ratio="1" data-text="1:1">
                         <span class="ratio-shape" style="width:16px; height:16px;"></span>
@@ -642,20 +641,28 @@
         const data = cropper.getData();
         const currentW = Math.round(data.width);
         const currentH = Math.round(data.height);
-        
         const effectiveRatio = isNaN(currentAspectRatio) ? (data.width / data.height) : currentAspectRatio;
 
         sizeOptions.innerHTML = '';
-        selectedSize = null; 
-        customW.value = currentW; 
-        customH.value = currentH;
-
-        createSizeBtn(`${currentW} x ${currentH}`, {width: currentW, height: currentH}, true);
+        
+        // ★ デフォルトサイズ (640px) 設定ロジック
+        const defaultTargetW = 640;
+        const defaultTargetH = Math.round(defaultTargetW / effectiveRatio);
+        
+        // 状態を640で初期化
+        selectedSize = { width: defaultTargetW, height: defaultTargetH };
+        customW.value = defaultTargetW;
+        customH.value = defaultTargetH;
+        
+        // オリジナルボタン (非アクティブ)
+        createSizeBtn(`${currentW} x ${currentH}`, {width: currentW, height: currentH}, false);
 
         const presets = [512, 640, 800, 1024, 1080, 1280];
         presets.forEach(w => {
             const h = Math.round(w / effectiveRatio);
-            createSizeBtn(`${w} x ${h}`, {width: w, height: h}, false);
+            // 640ならアクティブにする
+            const isDefault = (w === defaultTargetW);
+            createSizeBtn(`${w} x ${h}`, {width: w, height: h}, isDefault);
         });
 
         const updateCustom = (e) => {

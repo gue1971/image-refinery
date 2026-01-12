@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Refinery (v7.0 Numpad)</title>
+    <title>Image Refinery (v8.0 Refined)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
@@ -74,11 +74,10 @@
 
         .ratio-display-btn {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 0 15px; height: 40px; min-width: 160px;
+            padding: 0 15px; height: 40px; min-width: 100px; /* 少し狭くした */
             text-align: left; font-size: 0.9rem;
         }
-        .ratio-value { font-weight: bold; font-size: 1.1rem; margin-right: 8px; }
-        .ratio-desc { font-size: 0.8rem; color: #aaa; }
+        .ratio-value { font-weight: bold; font-size: 1.1rem; }
         .ratio-icon { margin-left: 10px; font-size: 0.8rem; color: #888; }
 
         .info-panel {
@@ -120,16 +119,28 @@
             border-bottom: 1px solid #444; padding-bottom: 15px;
         }
 
-        /* 比率リスト */
-        .ratio-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
+        /* 比率リスト (2列表示に変更) */
+        .ratio-list { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 10px; 
+            margin-bottom: 15px; 
+        }
         .ratio-item {
-            background: #3a3a3a; border: 1px solid #444; padding: 10px 15px;
+            background: #3a3a3a; border: 1px solid #444; padding: 10px;
             border-radius: 8px; cursor: pointer; display: flex;
-            justify-content: space-between; align-items: center; transition: background 0.2s;
+            align-items: center; transition: background 0.2s;
+            gap: 10px;
         }
         .ratio-item:hover { background: #4a4a4a; border-color: #666; }
-        .ratio-item-main { font-weight: bold; font-size: 1.1rem; color: #fff; }
-        .ratio-item-sub { font-size: 0.85rem; color: #aaa; }
+        .ratio-item-main { font-weight: bold; font-size: 1rem; color: #fff; }
+        
+        /* 比率アイコン (四角形) */
+        .ratio-shape {
+            display: block;
+            border: 2px solid #ccc;
+            background: rgba(255,255,255,0.1);
+        }
 
         /* カスタム入力エリア */
         .custom-ratio-area {
@@ -145,16 +156,20 @@
         }
         .ratio-input-box:focus { border-color: #007bff; outline: none; background: #000; }
 
-        /* --- テンキーパネル --- */
+        /* --- テンキーパネル (初期非表示) --- */
         .numpad-container {
-            display: grid;
+            display: none; /* デフォルトで隠す */
             grid-template-columns: repeat(3, 1fr);
             gap: 8px;
             background: #222;
             padding: 10px;
             border-radius: 8px;
             margin-bottom: 15px;
+            margin-top: 10px;
+            animation: fadeIn 0.2s ease;
         }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
         .numpad-btn {
             background: #3a3a3a;
             border: 1px solid #444;
@@ -164,17 +179,17 @@
             font-size: 1.2rem;
             font-weight: bold;
             cursor: pointer;
-            user-select: none; /* ダブルクリック防止 */
+            user-select: none;
         }
         .numpad-btn:hover { background: #555; }
         .numpad-btn:active { background: #007bff; border-color: #007bff; }
-        .numpad-btn.wide { grid-column: span 2; }
         
         /* サイズモーダル用 */
         .size-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
         .size-btn {
             background: #3a3a3a; border: 1px solid #444; padding: 12px;
             color: #ccc; cursor: pointer; border-radius: 6px; text-align: center;
+            font-weight: bold;
         }
         .size-btn:hover, .size-btn.active { background: #007bff; color: #fff; border-color: #007bff; }
         
@@ -189,7 +204,6 @@
             background: #222; border: 1px solid #555; color: #fff; border-radius: 4px;
         }
 
-        /* スピンボタン消去 */
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { 
             -webkit-appearance: none; margin: 0; 
@@ -209,7 +223,6 @@
     <div id="openRatioModalBtn" class="ratio-display-btn glass-btn">
         <div>
             <span id="currentRatioValue" class="ratio-value">4:3</span>
-            <span id="currentRatioDesc" class="ratio-desc">馬・写真用</span>
         </div>
         <span class="ratio-icon">▼</span>
     </div>
@@ -236,20 +249,36 @@
     <div class="modal">
         <h3>トリミング比率を選択</h3>
         <div class="ratio-list">
-            <div class="ratio-item" data-ratio="1.33333" data-text="4:3" data-desc="馬・写真用">
-                <span class="ratio-item-main">4 : 3</span><span class="ratio-item-sub">標準</span>
+            <div class="ratio-item" data-ratio="1.33333" data-text="4:3">
+                <span class="ratio-shape" style="width:20px; height:15px;"></span>
+                <span class="ratio-item-main">4 : 3</span>
             </div>
-            <div class="ratio-item" data-ratio="1" data-text="1:1" data-desc="スクエア">
-                <span class="ratio-item-main">1 : 1</span><span class="ratio-item-sub">SNS</span>
+            <div class="ratio-item" data-ratio="0.75" data-text="3:4">
+                <span class="ratio-shape" style="width:15px; height:20px;"></span>
+                <span class="ratio-item-main">3 : 4</span>
             </div>
-            <div class="ratio-item" data-ratio="0.8" data-text="4:5" data-desc="スマホ縦長">
-                <span class="ratio-item-main">4 : 5</span><span class="ratio-item-sub">フィード</span>
+
+            <div class="ratio-item" data-ratio="1.77777" data-text="16:9">
+                <span class="ratio-shape" style="width:24px; height:13.5px;"></span>
+                <span class="ratio-item-main">16 : 9</span>
             </div>
-            <div class="ratio-item" data-ratio="1.77777" data-text="16:9" data-desc="ワイド">
-                <span class="ratio-item-main">16 : 9</span><span class="ratio-item-sub">Youtube</span>
+            <div class="ratio-item" data-ratio="0.5625" data-text="9:16">
+                <span class="ratio-shape" style="width:13.5px; height:24px;"></span>
+                <span class="ratio-item-main">9 : 16</span>
             </div>
-            <div class="ratio-item" data-ratio="NaN" data-text="Free" data-desc="自由変形">
-                <span class="ratio-item-main">Free</span><span class="ratio-item-sub">制限なし</span>
+
+            <div class="ratio-item" data-ratio="1" data-text="1:1">
+                <span class="ratio-shape" style="width:18px; height:18px;"></span>
+                <span class="ratio-item-main">1 : 1</span>
+            </div>
+            <div class="ratio-item" data-ratio="0.8" data-text="4:5">
+                <span class="ratio-shape" style="width:16px; height:20px;"></span>
+                <span class="ratio-item-main">4 : 5</span>
+            </div>
+            
+            <div class="ratio-item" data-ratio="NaN" data-text="Free" style="grid-column: span 2;">
+                <span class="ratio-shape" style="width:20px; height:20px; border-style:dashed;"></span>
+                <span class="ratio-item-main">Free</span>
             </div>
         </div>
 
@@ -318,7 +347,7 @@
 </div>
 
 <script>
-    // --- 要素取得 ---
+    // 要素取得
     const image = document.getElementById('image');
     const input = document.getElementById('imageUpload');
     const nextBtn = document.getElementById('nextBtn');
@@ -328,7 +357,6 @@
     const ratioModal = document.getElementById('ratioModal');
     const closeRatioModal = document.getElementById('closeRatioModal');
     const currentRatioValue = document.getElementById('currentRatioValue');
-    const currentRatioDesc = document.getElementById('currentRatioDesc');
     const originalSizeText = document.getElementById('originalSizeText');
     const cropSizeText = document.getElementById('cropSizeText');
 
@@ -337,6 +365,7 @@
     const ratioInputW = document.getElementById('ratioInputW');
     const ratioInputH = document.getElementById('ratioInputH');
     const applyCustomRatio = document.getElementById('applyCustomRatio');
+    const ratioNumpad = document.getElementById('ratioNumpad');
     
     // サイズ入力
     const sizeModal = document.getElementById('sizeModal');
@@ -345,6 +374,7 @@
     const customH = document.getElementById('customH');
     const sizeCancel = document.getElementById('sizeCancel');
     const sizeConfirm = document.getElementById('sizeConfirm');
+    const sizeNumpad = document.getElementById('sizeNumpad');
 
     // 名前入力
     const nameModal = document.getElementById('nameModal');
@@ -357,72 +387,62 @@
     let selectedSize = null; 
     let originalBaseName = "";
     let exifDateName = "";
-    let currentAspectRatio = 1.33333; // 初期 4:3
+    let currentAspectRatio = 1.33333; 
 
     // ---------------------------
-    // ★ テンキー & 全選択ロジック
+    // テンキー制御
     // ---------------------------
-    let lastFocusedInput = null; // 最後に触った入力欄を記憶
+    let lastFocusedInput = null; 
 
-    // すべてのテンキー対象入力欄にイベント設定
+    // ターゲット入力欄のイベント
     const numpadTargets = document.querySelectorAll('.numpad-target');
     numpadTargets.forEach(input => {
-        // フォーカス時に全選択
         input.addEventListener('focus', function() {
             this.select();
-            lastFocusedInput = this; // 入力先として記憶
+            lastFocusedInput = this;
+            
+            // Numpadを表示する
+            if (ratioModal.style.display === 'flex') {
+                ratioNumpad.style.display = 'grid';
+            } else if (sizeModal.style.display === 'flex') {
+                sizeNumpad.style.display = 'grid';
+            }
         });
         
-        // クリック時も念のため記憶
         input.addEventListener('click', function() {
             lastFocusedInput = this;
+             // click時も念のため表示
+            if (ratioModal.style.display === 'flex') {
+                ratioNumpad.style.display = 'grid';
+            } else if (sizeModal.style.display === 'flex') {
+                sizeNumpad.style.display = 'grid';
+            }
         });
     });
 
-    // テンキーボタンの動作設定
+    // テンキーボタン処理
     document.querySelectorAll('.numpad-btn').forEach(btn => {
-        // マウスダウン時にフォーカスを奪わないようにする(重要)
-        btn.addEventListener('mousedown', (e) => {
-            e.preventDefault();
-        });
-
+        btn.addEventListener('mousedown', (e) => e.preventDefault()); // フォーカス奪取防止
+        
         btn.addEventListener('click', () => {
             const key = btn.dataset.key;
-            
-            // ターゲットがない場合は、各モーダルのWをデフォルトにする
-            if (!lastFocusedInput) {
-                if (ratioModal.style.display === 'flex') lastFocusedInput = ratioInputW;
-                else if (sizeModal.style.display === 'flex') lastFocusedInput = customW;
-                else return;
-            }
-            
-            // ターゲットが現在表示中のモーダル内にない場合は無視 (誤爆防止)
-            if (!lastFocusedInput.offsetParent) return;
+            if (!lastFocusedInput || !lastFocusedInput.offsetParent) return;
 
             let currentVal = lastFocusedInput.value.toString();
-
-            // 全選択状態なら、最初の入力でクリアする
             const isSelectedAll = (lastFocusedInput.selectionStart === 0 && lastFocusedInput.selectionEnd === currentVal.length && currentVal.length > 0);
 
             if (key === 'C') {
                 lastFocusedInput.value = '';
             } else if (key === 'BS') {
-                if (isSelectedAll) lastFocusedInput.value = ''; // 全選択なら消すだけ
+                if (isSelectedAll) lastFocusedInput.value = ''; 
                 else lastFocusedInput.value = currentVal.slice(0, -1);
             } else {
-                // 数字キー
-                if (isSelectedAll) {
-                    lastFocusedInput.value = key; // 上書き
-                } else {
-                    lastFocusedInput.value = currentVal + key; // 追記
-                }
+                if (isSelectedAll) lastFocusedInput.value = key; 
+                else lastFocusedInput.value = currentVal + key; 
             }
-
-            // inputイベントを手動発火 (自動計算ロジックを動かすため)
             lastFocusedInput.dispatchEvent(new Event('input'));
         });
     });
-
 
     // ---------------------------
     // 画像ロード
@@ -495,11 +515,7 @@
     // ---------------------------
     openRatioModalBtn.addEventListener('click', () => {
         ratioModal.style.display = 'flex';
-        // モーダル開いた時にWにフォーカスあてとく（テンキー即打ち用）
-        setTimeout(() => { 
-            ratioInputW.focus(); 
-            lastFocusedInput = ratioInputW;
-        }, 50);
+        ratioNumpad.style.display = 'none'; // 最初は隠す
     });
 
     closeRatioModal.addEventListener('click', () => {
@@ -508,7 +524,7 @@
 
     ratioItems.forEach(item => {
         item.addEventListener('click', () => {
-            applyRatio(parseFloat(item.dataset.ratio), item.dataset.text, item.dataset.desc);
+            applyRatio(parseFloat(item.dataset.ratio), item.dataset.text);
         });
     });
 
@@ -516,15 +532,14 @@
         const w = parseFloat(ratioInputW.value);
         const h = parseFloat(ratioInputH.value);
         if (w > 0 && h > 0) {
-            applyRatio(w / h, `${w}:${h}`, "カスタム");
+            applyRatio(w / h, `${w}:${h}`);
         } else {
             alert("数値を入力してください");
         }
     });
 
-    function applyRatio(newRatio, text, desc) {
+    function applyRatio(newRatio, text) {
         currentRatioValue.innerText = text;
-        currentRatioDesc.innerText = desc;
         currentAspectRatio = newRatio;
         
         if (cropper) {
@@ -558,6 +573,7 @@
         
         currentPhase = 'size';
         sizeModal.style.display = 'flex';
+        sizeNumpad.style.display = 'none'; // 最初は隠す
         
         const data = cropper.getData();
         const currentW = Math.round(data.width);
@@ -569,21 +585,15 @@
         customW.value = currentW; 
         customH.value = currentH;
 
-        // 初期フォーカス
-        setTimeout(() => { 
-            customW.focus(); 
-            lastFocusedInput = customW;
-        }, 50);
-
-        createSizeBtn(`そのまま\n${currentW} x ${currentH}`, {width: currentW, height: currentH}, true);
+        // ボタンのテキストをシンプル化 ("幅 ??? x ???" を削除)
+        createSizeBtn(`${currentW} x ${currentH}`, {width: currentW, height: currentH}, true);
 
         const presets = [640, 800, 1024, 1280, 1920];
         presets.forEach(w => {
             const h = Math.round(w / currentRatio);
-            createSizeBtn(`幅 ${w}px\n${w} x ${h}`, {width: w, height: h}, false);
+            createSizeBtn(`${w} x ${h}`, {width: w, height: h}, false);
         });
 
-        // 連動計算ロジック
         const updateCustom = (e) => {
             document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
             const input = e.target;
@@ -616,9 +626,6 @@
             if (sizeVal) {
                 customW.value = sizeVal.width;
                 customH.value = sizeVal.height;
-                // ボタン選択時もlastFocusedInputを更新せず、
-                // 次にテンキーを押したときはWに入るようにする？
-                // あるいはここは何もしない
             }
         });
         sizeOptions.appendChild(btn);
@@ -650,7 +657,6 @@
     });
     nameConfirm.addEventListener('click', executeSave);
 
-
     // ---------------------------
     // キーボード制御
     // ---------------------------
@@ -668,7 +674,6 @@
             return;
         }
         
-        // 矢印操作 (メイン)
         if (currentPhase === 'main' && cropper && ratioModal.style.display !== 'flex') {
             if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
                 e.preventDefault();

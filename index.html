@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Refinery (v3.4)</title>
+    <title>Image Refinery (v4.0 Safe-Mode)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
@@ -25,26 +25,18 @@
             width: 100%;
             box-sizing: border-box;
             display: flex;
-            flex-direction: column;
-            gap: 10px;
+            gap: 15px;
             align-items: center;
             justify-content: center;
             border-bottom: 1px solid #444;
             flex-shrink: 0;
-        }
-        .row {
-            display: flex;
-            gap: 12px; /* 少し間隔を広げた */
-            align-items: center;
             flex-wrap: wrap;
-            justify-content: center;
-            width: 100%;
         }
         
         .img-container {
             flex-grow: 1;
             width: 100%;
-            height: calc(100vh - 100px);
+            height: calc(100vh - 70px);
             background: #000;
             overflow: hidden;
             position: relative;
@@ -60,12 +52,12 @@
         }
 
         input[type="text"], select {
-            padding: 6px;
+            padding: 8px;
             border-radius: 4px;
             border: 1px solid #555;
             background: #222;
             color: #fff;
-            font-size: 14px;
+            font-size: 16px;
             text-align: center;
         }
         input[type="text"]:focus, select:focus {
@@ -73,76 +65,93 @@
             outline: none;
         }
         
-        .info-badge {
-            font-family: monospace;
-            font-size: 13px;
-            background: #444;
-            padding: 4px 8px;
-            border-radius: 4px;
-            color: #ccc;
-            white-space: nowrap;
-        }
-        .info-label { color: #888; margin-right: 4px; }
-        .info-val { color: #fff; font-weight: bold; }
-
         button {
-            padding: 6px 16px;
+            padding: 8px 20px;
             background-color: #007bff;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 16px;
             white-space: nowrap;
         }
         button:hover { background-color: #0056b3; }
 
-        .divider {
-            width: 1px;
-            height: 24px;
-            background: #555;
-            margin: 0 2px;
+        /* モーダル（保存時のポップアップ） */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal {
+            background: #333;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            width: 300px;
+            text-align: center;
+        }
+        .modal h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #fff;
+            font-size: 18px;
+        }
+        .modal-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .size-btn {
+            background: #444;
+            border: 1px solid #555;
+            padding: 10px;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        .size-btn:hover, .size-btn.active {
+            background: #007bff;
+            border-color: #007bff;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .cancel-btn {
+            background: #666;
+            flex: 1;
+        }
+        .confirm-btn {
+            background: #28a745;
+            flex: 1;
         }
     </style>
 </head>
 <body>
 
 <div class="controls">
-    <div class="row">
-        <input type="file" id="imageInput" accept="image/*" style="max-width: 180px; color: #aaa;">
-        <div class="divider"></div>
-        <span class="info-badge">
-            <span class="info-label">元画像:</span>
-            <span id="originalSize" class="info-val">- x -</span>
-        </span>
-        <span class="info-badge">
-            <span class="info-label">選択範囲:</span>
-            <span id="cropSize" class="info-val">- x -</span>
-        </span>
-    </div>
+    <input type="file" id="imageInput" accept="image/*" style="max-width: 200px; color: #aaa;">
+    
+    <select id="ratioSelect" title="トリミング比率">
+        <option value="1.33333" selected>比率 4:3</option>
+        <option value="1">比率 1:1</option>
+        <option value="1.77777">比率 16:9</option>
+        <option value="1.5">比率 3:2</option>
+        <option value="NaN">フリー</option>
+    </select>
 
-    <div class="row">
-        <select id="ratioSelect" title="トリミング比率">
-            <option value="1.33333" selected>比率 4:3</option>
-            <option value="1">比率 1:1</option>
-            <option value="1.77777">比率 16:9</option>
-            <option value="1.5">比率 3:2</option>
-            <option value="NaN">フリー</option>
-        </select>
-
-        <div class="divider"></div>
-
-        <span>出力:</span>
-        <input type="text" id="sizeInput" list="sizePresets" placeholder="リサイズなし" style="width: 120px;" title="例: 640x480">
-        <datalist id="sizePresets">
-            </datalist>
-
-        <div class="divider"></div>
-
-        <input type="text" id="filenameInput" placeholder="YYYYMMDD" style="width: 100px;">
-        <button id="saveBtn">保存 (Enter)</button>
-    </div>
+    <input type="text" id="filenameInput" placeholder="YYYYMMDD" style="width: 120px;">
+    <button id="preSaveBtn">保存へ (Enter)</button>
 </div>
 
 <div class="img-container">
@@ -150,70 +159,45 @@
     <img id="image" style="max-width: 100%; display: block;">
 </div>
 
+<div id="saveModal" class="modal-overlay">
+    <div class="modal">
+        <h3>書き出しサイズを選択</h3>
+        <div id="sizeOptions" class="modal-options">
+            </div>
+        
+        <div style="margin-bottom: 15px; text-align: left; font-size: 14px; color: #aaa;">
+            <label>
+                カスタム幅: <input type="number" id="customWidth" placeholder="px" style="width: 60px; padding: 4px;"> px
+            </label>
+        </div>
+
+        <div class="modal-actions">
+            <button class="cancel-btn" id="modalCancel">キャンセル</button>
+            <button class="confirm-btn" id="modalConfirm">決定 (Enter)</button>
+        </div>
+    </div>
+</div>
+
 <script>
     const image = document.getElementById('image');
     const input = document.getElementById('imageInput');
     const filenameInput = document.getElementById('filenameInput');
-    const saveBtn = document.getElementById('saveBtn');
-    
+    const preSaveBtn = document.getElementById('preSaveBtn');
     const ratioSelect = document.getElementById('ratioSelect');
-    const sizeInput = document.getElementById('sizeInput');
-    const sizePresets = document.getElementById('sizePresets');
     
-    const originalSizeDisplay = document.getElementById('originalSize');
-    const cropSizeDisplay = document.getElementById('cropSize');
+    // モーダル要素
+    const saveModal = document.getElementById('saveModal');
+    const sizeOptions = document.getElementById('sizeOptions');
+    const customWidthInput = document.getElementById('customWidth');
+    const modalCancel = document.getElementById('modalCancel');
+    const modalConfirm = document.getElementById('modalConfirm');
 
     let cropper;
-
-    // 標準的な横幅プリセット
-    const baseWidths = [640, 800, 1024, 1280, 1600, 1920];
+    let selectedWidth = null; // nullなら原寸
 
     // ---------------------------
-    // イベントリスナー
+    // 基本操作
     // ---------------------------
-
-    // 1. 比率が変わった時
-    ratioSelect.addEventListener('change', () => {
-        if (!cropper) return;
-
-        const val = ratioSelect.value;
-        const ratio = parseFloat(val);
-
-        if (isNaN(ratio)) {
-            // フリー選択時：枠はいじらず、アスペクト比固定だけ解除
-            cropper.setAspectRatio(NaN);
-            updateSizePresets(null); // 候補リストを汎用的なものへ
-        } else {
-            // 固定比率時：枠を変形・移動
-            cropper.setAspectRatio(ratio);
-            fitCropBox(ratio);
-            updateSizePresets(ratio); // 候補リストをその比率専用へ
-        }
-    });
-
-    // 2. サイズ入力が変わった時 -> カスタムサイズ解析
-    sizeInput.addEventListener('change', () => {
-        const val = sizeInput.value.trim();
-        if (!val) return; 
-
-        // "640x480" 形式などを解析
-        const match = val.match(/^(\d+)[x×,:*](\d+)$/);
-        if (match) {
-            const w = parseInt(match[1]);
-            const h = parseInt(match[2]);
-            const newRatio = w / h;
-
-            if (cropper) {
-                // カスタムサイズが入力されたら、その比率に強制変更
-                cropper.setAspectRatio(newRatio);
-                fitCropBox(newRatio);
-                
-                // 比率プルダウンの見た目は整合性が取れなくなるので
-                // 必要なら「フリー」にしておくか、そのままにしておく
-                // ここではユーザーの入力を優先してそのまま動作させる
-            }
-        }
-    });
 
     input.addEventListener('change', (e) => {
         if (e.target.files && e.target.files.length > 0) loadFile(e.target.files[0]);
@@ -228,22 +212,73 @@
         }
     });
 
-    saveBtn.addEventListener('click', saveImage);
+    ratioSelect.addEventListener('change', () => {
+        if (!cropper) return;
+        const val = parseFloat(ratioSelect.value);
+        cropper.setAspectRatio(val); // フリー(NaN)もこれでOK
+    });
+
+    function loadFile(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            image.src = e.target.result;
+            
+            EXIF.getData(file, function() {
+                const date = EXIF.getTag(this, "DateTimeOriginal");
+                if (date) {
+                    const formattedDate = date.split(' ')[0].replace(/:/g, '');
+                    filenameInput.value = formattedDate;
+                } else {
+                    filenameInput.value = ""; 
+                }
+            });
+
+            if (cropper) cropper.destroy();
+            const initialRatio = parseFloat(ratioSelect.value);
+
+            cropper = new Cropper(image, {
+                aspectRatio: initialRatio,
+                viewMode: 1, 
+                dragMode: 'move',
+                autoCropArea: 0.8,
+                toggleDragModeOnDblclick: false,
+                ready: function() {
+                    document.activeElement.blur();
+                }
+            });
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // ---------------------------
+    // キーボード操作 & 保存フロー
+    // ---------------------------
 
     document.addEventListener('keydown', (e) => {
-        if (['TEXT'].includes(e.target.type?.toUpperCase())) {
+        // モーダルが開いている時
+        if (saveModal.style.display === 'flex') {
+            if (e.key === 'Escape') closeModal();
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                executeSave();
+            }
+            return;
+        }
+
+        // 入力フォームでのEnter
+        if (e.target.tagName === 'INPUT') {
             if (e.isComposing) return;
             if (e.key === 'Enter') {
                 e.preventDefault();
-                saveImage();
                 e.target.blur();
+                openModal(); // ファイル名入力後すぐに保存へ
             }
             return;
         }
 
         if (!cropper) return;
 
-        // 矢印キー操作
+        // 矢印キー（トリミング調整）
         if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
             e.preventDefault();
             let data = cropper.getData();
@@ -252,9 +287,8 @@
             const moveStep = 1;
 
             if (shift) {
-                // 現在の実際の比率を取得して計算（フリーモードでも崩れないように）
+                // アスペクト比維持リサイズ
                 const currentRatio = data.width / data.height;
-                
                 let deltaW = 0;
                 if (e.key === 'ArrowRight' || e.key === 'ArrowUp') deltaW = resizeStep;
                 else deltaW = -resizeStep;
@@ -279,134 +313,109 @@
 
         if (e.key === 'Enter') {
             e.preventDefault();
-            saveImage();
+            openModal();
         }
     });
 
+    preSaveBtn.addEventListener('click', openModal);
+    modalCancel.addEventListener('click', closeModal);
+    modalConfirm.addEventListener('click', executeSave);
+
     // ---------------------------
-    // ロジック関数
+    // モーダルロジック
     // ---------------------------
 
-    function updateSizePresets(ratio) {
-        sizePresets.innerHTML = ''; // 一旦クリア
-        
-        // フリー(null/NaN)の場合は幅のみの提案か、あるいは空にする
-        if (!ratio || isNaN(ratio)) {
-            // フリー時は具体的な組み合わせが出せないので、
-            // よくある幅だけ入れておく（高さは自動計算されるわけではないが、入力ヒントとして）
-            /* フリーモードで「幅だけ指定」したい場合もあるかもしれんが、
-               今のUIは「WxH」入力を求めているので、
-               あえて候補を出さないか、代表的なVGA/HDサイズをそのまま出す
-            */
-            const commonSizes = ["640x480", "1024x768", "1920x1080", "800x800"];
-            commonSizes.forEach(s => {
-                const opt = document.createElement('option');
-                opt.value = s;
-                sizePresets.appendChild(opt);
-            });
-            return;
-        }
-
-        // 比率が決まっている場合は、その比率に計算されたセットを作る
-        baseWidths.forEach(w => {
-            const h = Math.round(w / ratio);
-            const opt = document.createElement('option');
-            opt.value = `${w}x${h}`;
-            sizePresets.appendChild(opt);
-        });
-    }
-
-    function fitCropBox(ratio) {
-        setTimeout(() => {
-            const canvasData = cropper.getCanvasData();
-            const cx = canvasData.left + (canvasData.width / 2);
-            const cy = canvasData.top + (canvasData.height / 2);
-
-            let newWidth = canvasData.width * 0.8;
-            let newHeight = newWidth / ratio;
-
-            if (newHeight > canvasData.height * 0.8) {
-                newHeight = canvasData.height * 0.8;
-                newWidth = newHeight * ratio;
-            }
-
-            cropper.setCropBoxData({
-                left: cx - (newWidth / 2),
-                top: cy - (newHeight / 2),
-                width: newWidth,
-                height: newHeight
-            });
-        }, 10);
-    }
-
-    function loadFile(file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            image.src = e.target.result;
-            
-            const tempImg = new Image();
-            tempImg.onload = function() {
-                originalSizeDisplay.textContent = `${this.naturalWidth} x ${this.naturalHeight}`;
-            };
-            tempImg.src = image.src;
-
-            EXIF.getData(file, function() {
-                const date = EXIF.getTag(this, "DateTimeOriginal");
-                if (date) {
-                    const formattedDate = date.split(' ')[0].replace(/:/g, '');
-                    filenameInput.value = formattedDate;
-                } else {
-                    filenameInput.value = ""; 
-                }
-            });
-
-            if (cropper) cropper.destroy();
-            
-            const initialRatio = parseFloat(ratioSelect.value);
-            // 初期化前にプリセット作成
-            updateSizePresets(initialRatio);
-
-            cropper = new Cropper(image, {
-                aspectRatio: initialRatio,
-                viewMode: 1, 
-                dragMode: 'move',
-                autoCropArea: 0.8,
-                toggleDragModeOnDblclick: false,
-                crop: function(event) {
-                    const w = Math.round(event.detail.width);
-                    const h = Math.round(event.detail.height);
-                    cropSizeDisplay.textContent = `${w} x ${h}`;
-                },
-                ready: function() {
-                    document.activeElement.blur();
-                }
-            });
-        };
-        reader.readAsDataURL(file);
-    }
-
-    function saveImage() {
+    function openModal() {
         if (!cropper) return;
         
+        // ファイル名チェック
         let filename = filenameInput.value.trim();
         if (!filename) {
-            alert("ファイル名（日付）を入力して！");
+            alert("先にファイル名（日付）を入力して！");
             filenameInput.focus();
             return;
         }
 
+        // 現在の切り抜き実寸を取得
+        const data = cropper.getData();
+        const currentW = Math.round(data.width);
+        const currentH = Math.round(data.height);
+        const ratio = currentW / currentH;
+
+        // モーダルの中身をリセット
+        sizeOptions.innerHTML = '';
+        customWidthInput.value = '';
+        selectedWidth = null; // 初期値は原寸（null）
+
+        // 1. 原寸ボタン（デフォルト）
+        createOptionBtn(`そのまま (${currentW} x ${currentH})`, null, true);
+
+        // 2. プリセットボタン（比率に応じたサイズを提案）
+        // 代表的な幅のリスト
+        const targets = [640, 800, 1024, 1280];
+        
+        targets.forEach(w => {
+            // 元画像より大きく引き伸ばすのは荒れるので除外（お好みで）
+            // ここでは利便性のため全部出す
+            const h = Math.round(w / ratio);
+            createOptionBtn(`幅 ${w}px (${w} x ${h})`, w, false);
+        });
+
+        saveModal.style.display = 'flex';
+        modalConfirm.focus(); // Enter連打で保存できるようにフォーカス
+    }
+
+    function createOptionBtn(text, widthVal, isDefault) {
+        const btn = document.createElement('div');
+        btn.className = 'size-btn';
+        btn.textContent = text;
+        if (isDefault) btn.classList.add('active');
+
+        btn.addEventListener('click', () => {
+            // 他のボタンのactiveを消す
+            document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selectedWidth = widthVal;
+            customWidthInput.value = ''; // カスタム入力はクリア
+        });
+
+        sizeOptions.appendChild(btn);
+    }
+
+    // カスタム入力欄をいじったら選択状態をクリアしてカスタム優先にする
+    customWidthInput.addEventListener('input', () => {
+        document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+        selectedWidth = 'custom';
+    });
+
+    function closeModal() {
+        saveModal.style.display = 'none';
+        document.activeElement.blur();
+    }
+
+    function executeSave() {
+        if (!cropper) return;
+        
+        let filename = filenameInput.value.trim();
         const options = {
             imageSmoothingEnabled: true,
             imageSmoothingQuality: 'high'
         };
 
-        const sizeVal = sizeInput.value.trim();
-        const match = sizeVal.match(/^(\d+)[x×,:*](\d+)$/);
-        
-        if (match) {
-            options.width = parseInt(match[1]);
-            options.height = parseInt(match[2]);
-        } 
+        // サイズ決定ロジック
+        let finalWidth = null;
+
+        if (selectedWidth === 'custom') {
+            const val = parseInt(customWidthInput.value);
+            if (val > 0) finalWidth = val;
+        } else if (selectedWidth !== null) {
+            finalWidth = selectedWidth;
+        }
+
+        if (finalWidth) {
+            options.width = finalWidth;
+            // 高さはCropperが比率維持で自動計算
+        }
 
         const canvas = cropper.getCroppedCanvas(options);
 
@@ -419,8 +428,11 @@
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+            
+            closeModal(); // 保存後に閉じる
         }, 'image/jpeg', 0.9);
     }
+
 </script>
 
 </body>

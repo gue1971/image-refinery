@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Image Refinery (v12.0 Default 640)</title>
+    <title>Image Refinery (v13.0 Optimized)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
@@ -122,7 +122,7 @@
             border-bottom: 1px solid #444; padding-bottom: 15px;
         }
 
-        /* --- 比率リスト (グループ分け対応) --- */
+        /* --- 比率リスト --- */
         .ratio-container {
             display: flex;
             flex-direction: column;
@@ -298,31 +298,18 @@
                             <span class="ratio-item-sub">動画 (Wide)</span>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <div class="ratio-group">
-                <div class="ratio-group-header">ポートレート</div>
-                <div class="ratio-grid">
-                    <div class="ratio-item" data-ratio="0.75" data-text="3:4">
-                        <span class="ratio-shape" style="width:13.5px; height:18px;"></span>
+                    <div class="ratio-item" data-ratio="1.5" data-text="3:2">
+                        <span class="ratio-shape" style="width:18px; height:12px;"></span>
                         <div class="ratio-info">
-                            <span class="ratio-item-main">3 : 4</span>
-                            <span class="ratio-item-sub">写真 (Photo)</span>
+                            <span class="ratio-item-main">3 : 2</span>
+                            <span class="ratio-item-sub">一眼 (Standard)</span>
                         </div>
                     </div>
-                    <div class="ratio-item" data-ratio="0.8" data-text="4:5">
-                        <span class="ratio-shape" style="width:13px; height:16px;"></span>
+                    <div class="ratio-item" data-ratio="2.35" data-text="2.35:1">
+                        <span class="ratio-shape" style="width:21px; height:9px;"></span>
                         <div class="ratio-info">
-                            <span class="ratio-item-main">4 : 5</span>
-                            <span class="ratio-item-sub">SNS (Feed)</span>
-                        </div>
-                    </div>
-                    <div class="ratio-item" data-ratio="0.5625" data-text="9:16">
-                        <span class="ratio-shape" style="width:11px; height:20px;"></span>
-                        <div class="ratio-info">
-                            <span class="ratio-item-main">9 : 16</span>
-                            <span class="ratio-item-sub">全画面 (Story)</span>
+                            <span class="ratio-item-main">2.35 : 1</span>
+                            <span class="ratio-item-sub">シネマ (Cinema)</span>
                         </div>
                     </div>
                 </div>
@@ -343,6 +330,40 @@
                         <div class="ratio-info">
                             <span class="ratio-item-main">Free</span>
                             <span class="ratio-item-sub">自由変形</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ratio-group">
+                <div class="ratio-group-header">ポートレート</div>
+                <div class="ratio-grid">
+                    <div class="ratio-item" data-ratio="0.75" data-text="3:4">
+                        <span class="ratio-shape" style="width:13.5px; height:18px;"></span>
+                        <div class="ratio-info">
+                            <span class="ratio-item-main">3 : 4</span>
+                            <span class="ratio-item-sub">写真 (Photo)</span>
+                        </div>
+                    </div>
+                    <div class="ratio-item" data-ratio="0.66666" data-text="2:3">
+                        <span class="ratio-shape" style="width:12px; height:18px;"></span>
+                        <div class="ratio-info">
+                            <span class="ratio-item-main">2 : 3</span>
+                            <span class="ratio-item-sub">スマホ (Pin)</span>
+                        </div>
+                    </div>
+                    <div class="ratio-item" data-ratio="0.8" data-text="4:5">
+                        <span class="ratio-shape" style="width:13px; height:16px;"></span>
+                        <div class="ratio-info">
+                            <span class="ratio-item-main">4 : 5</span>
+                            <span class="ratio-item-sub">SNS (Feed)</span>
+                        </div>
+                    </div>
+                    <div class="ratio-item" data-ratio="0.5625" data-text="9:16">
+                        <span class="ratio-shape" style="width:11px; height:20px;"></span>
+                        <div class="ratio-info">
+                            <span class="ratio-item-main">9 : 16</span>
+                            <span class="ratio-item-sub">全画面 (Story)</span>
                         </div>
                     </div>
                 </div>
@@ -641,28 +662,54 @@
         const data = cropper.getData();
         const currentW = Math.round(data.width);
         const currentH = Math.round(data.height);
+        
         const effectiveRatio = isNaN(currentAspectRatio) ? (data.width / data.height) : currentAspectRatio;
 
         sizeOptions.innerHTML = '';
         
-        // ★ デフォルトサイズ (640px) 設定ロジック
-        const defaultTargetW = 640;
-        const defaultTargetH = Math.round(defaultTargetW / effectiveRatio);
+        // ★ デフォルトターゲット: 長辺640px
+        const defaultLongSide = 640;
+        let defaultW, defaultH;
         
-        // 状態を640で初期化
-        selectedSize = { width: defaultTargetW, height: defaultTargetH };
-        customW.value = defaultTargetW;
-        customH.value = defaultTargetH;
+        // 縦横判定してデフォルトサイズ計算
+        if (effectiveRatio < 1) {
+            // 縦長
+            defaultH = defaultLongSide;
+            defaultW = Math.round(defaultLongSide * effectiveRatio);
+        } else {
+            // 横長 or スクエア
+            defaultW = defaultLongSide;
+            defaultH = Math.round(defaultLongSide / effectiveRatio);
+        }
         
-        // オリジナルボタン (非アクティブ)
+        // デフォルト選択状態で初期化
+        selectedSize = { width: defaultW, height: defaultH };
+        customW.value = defaultW;
+        customH.value = defaultH;
+        // テンキー入力用のアクティブ設定
+        lastFocusedInput = customW;
+        customW.dataset.selected = "true";
+        customW.style.borderColor = "#007bff";
+
+        // オリジナルボタン
         createSizeBtn(`${currentW} x ${currentH}`, {width: currentW, height: currentH}, false);
 
-        const presets = [512, 640, 800, 1024, 1080, 1280];
-        presets.forEach(w => {
-            const h = Math.round(w / effectiveRatio);
-            // 640ならアクティブにする
-            const isDefault = (w === defaultTargetW);
-            createSizeBtn(`${w} x ${h}`, {width: w, height: h}, isDefault);
+        // プリセットボタン生成 (長辺合わせ)
+        // インスタ用(1350/1920)も含める
+        const presets = [512, 640, 800, 1024, 1080, 1280, 1350, 1920];
+        presets.forEach(size => {
+            let w, h;
+            if (effectiveRatio < 1) {
+                h = size;
+                w = Math.round(size * effectiveRatio);
+            } else {
+                w = size;
+                h = Math.round(size / effectiveRatio);
+            }
+            
+            // 640(defaultLongSide)と一致するボタンをアクティブにする
+            const isActive = (size === defaultLongSide);
+            createSizeBtn(`${w} x ${h}`, {width: w, height: h}, isActive);
         });
 
         const updateCustom = (e) => {

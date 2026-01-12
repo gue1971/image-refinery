@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Refinery (v5.1 Refined)</title>
+    <title>Image Refinery (v5.2 Fixed)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
@@ -19,24 +19,13 @@
             height: 100vh;
             overflow: hidden;
         }
-        /* メイン操作バー */
-        .controls {
-            padding: 10px 15px;
-            background: #333;
-            width: 100%;
-            box-sizing: border-box;
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            justify-content: center;
-            border-bottom: 1px solid #444;
-            flex-shrink: 0;
-        }
-        
+
+        /* --- メインエリアのレイアウト --- */
         .img-container {
             flex-grow: 1;
             width: 100%;
-            height: calc(100vh - 60px);
+            /* コントロールパネルの分を引く(大体の高さ) */
+            height: calc(100vh - 140px);
             background: #000;
             overflow: hidden;
             position: relative;
@@ -49,10 +38,133 @@
             color: #666;
             text-align: center;
             pointer-events: none;
+            z-index: 0;
         }
 
-        /* 共通スタイル */
-        input, select, button {
+        /* --- ガラス風コントロールパネル --- */
+        .controls-panel-custom {
+            width: 100%;
+            padding: 15px 20px;
+            box-sizing: border-box;
+            background: #333;
+            border-bottom: 1px solid #444;
+            display: flex;
+            flex-wrap: wrap; /* スマホ対応 */
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            z-index: 10;
+        }
+
+        /* ガラス風共通クラス */
+        .glass-panel, .glass-btn {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 1. ファイル選択ボタン */
+        .file-upload-wrapper input[type="file"] {
+            display: none;
+        }
+
+        .custom-file-upload {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #fff;
+            background: rgba(255, 255, 255, 0.1);
+            transition: all 0.2s;
+            height: 40px;
+            box-sizing: border-box;
+        }
+
+        .custom-file-upload:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .custom-file-upload .icon {
+            margin-right: 8px;
+        }
+
+        /* 2. 比率選択チップ */
+        .aspect-ratio-selector {
+            display: flex;
+            align-items: center;
+            padding: 5px 15px;
+            border-radius: 8px;
+            height: 40px;
+            box-sizing: border-box;
+        }
+
+        .ratio-options {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+        
+        .ratio-label-text {
+            margin-right: 10px;
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+
+        .ratio-chip {
+            position: relative;
+            cursor: pointer;
+            margin: 0;
+        }
+
+        .ratio-chip input {
+            display: none;
+        }
+
+        .ratio-chip span {
+            display: block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            background: rgba(0, 0, 0, 0.3);
+            color: #ccc;
+            transition: all 0.2s ease;
+        }
+
+        .ratio-chip input:checked + span {
+            background: #fff;
+            color: #222;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(255,255,255,0.2);
+        }
+        
+        /* 3. 保存(次へ)ボタン */
+        .save-btn {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+            padding: 0 25px;
+            height: 40px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .save-btn:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+
+        /* --- モーダル用スタイル (既存維持) --- */
+        input, select {
             font-size: 16px;
             padding: 8px;
             border-radius: 4px;
@@ -60,48 +172,40 @@
             background: #222;
             color: #fff;
         }
-        input:focus, select:focus, button:focus {
+        input:focus {
             border-color: #007bff;
             outline: none;
         }
-        button {
-            background-color: #007bff;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-            padding: 8px 20px;
-        }
-        button:hover { background-color: #0056b3; }
 
-        /* モーダル共通 */
         .modal-overlay {
             display: none;
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.85);
             z-index: 1000;
             justify-content: center;
             align-items: center;
+            backdrop-filter: blur(5px);
         }
         .modal {
-            background: #333;
+            background: #2a2a2a;
             padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
             width: 360px;
             text-align: center;
+            border: 1px solid #444;
         }
         .modal h3 {
             margin-top: 0;
             margin-bottom: 20px;
             color: #fff;
             font-size: 18px;
-            border-bottom: 1px solid #555;
-            padding-bottom: 10px;
+            border-bottom: 1px solid #444;
+            padding-bottom: 15px;
         }
         
-        /* ステップ1: サイズ選択用 */
         .size-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -109,43 +213,41 @@
             margin-bottom: 20px;
         }
         .size-btn {
-            background: #444;
-            border: 1px solid #555;
+            background: #3a3a3a;
+            border: 1px solid #444;
             padding: 12px;
-            color: #fff;
+            color: #ccc;
             cursor: pointer;
-            border-radius: 4px;
+            border-radius: 6px;
             font-size: 14px;
             transition: background 0.1s;
         }
         .size-btn:hover, .size-btn.active {
             background: #007bff;
             border-color: #007bff;
+            color: #fff;
         }
         
-        /* カスタム入力エリア */
         .custom-size-area {
-            background: #2a2a2a;
+            background: #1a1a1a;
             padding: 15px;
-            border-radius: 4px;
+            border-radius: 6px;
             margin-bottom: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
+            border: 1px solid #333;
         }
         .custom-input {
-            width: 80px;
+            width: 70px;
             text-align: center;
         }
-        /* スピンボタン（上下矢印）を消す */
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { 
-            -webkit-appearance: none; 
-            margin: 0; 
+            -webkit-appearance: none; margin: 0; 
         }
 
-        /* ステップ2: ファイル名入力用 */
         .filename-input {
             width: 100%;
             box-sizing: border-box;
@@ -160,37 +262,70 @@
             justify-content: space-between;
             gap: 10px;
         }
-        .cancel-btn { background: #666; flex: 1; }
-        .confirm-btn { background: #28a745; flex: 1; }
+        .action-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .cancel-btn { background: #555; color: #ddd; }
+        .cancel-btn:hover { background: #666; }
+        .confirm-btn { background: #28a745; color: white; }
+        .confirm-btn:hover { background: #218838; }
 
     </style>
 </head>
 <body>
 
-<div class="controls">
-    <input type="file" id="imageInput" accept="image/*" style="max-width: 200px; color: #aaa;">
+<div class="controls-panel-custom">
     
-    <select id="ratioSelect" title="トリミング比率">
-        <option value="1.33333" selected>比率 4:3</option>
-        <option value="1">比率 1:1</option>
-        <option value="1.77777">比率 16:9</option>
-        <option value="1.5">比率 3:2</option>
-        <option value="NaN">フリー</option>
-    </select>
+    <div class="file-upload-wrapper">
+        <label for="imageUpload" class="custom-file-upload">
+            <span class="icon">📂</span>
+            <span>画像を選択</span>
+        </label>
+        <input type="file" id="imageUpload" accept="image/*">
+    </div>
 
-    <button id="nextBtn">次へ (Enter)</button>
+    <div class="aspect-ratio-selector glass-panel">
+        <span class="ratio-label-text">比率:</span>
+        <div class="ratio-options">
+            <label class="ratio-chip">
+                <input type="radio" name="aspectRatio" value="1" checked>
+                <span>1:1</span>
+            </label>
+            <label class="ratio-chip">
+                <input type="radio" name="aspectRatio" value="1.91">
+                <span>1.91:1</span>
+            </label>
+            <label class="ratio-chip">
+                <input type="radio" name="aspectRatio" value="0.8">
+                <span>4:5</span>
+            </label>
+            <label class="ratio-chip">
+                <input type="radio" name="aspectRatio" value="free">
+                <span>Free</span>
+            </label>
+        </div>
+    </div>
+
+    <button id="nextBtn" class="save-btn">
+        保存へ進む
+    </button>
+
 </div>
 
 <div class="img-container">
     <div class="placeholder">画像をドラッグ＆ドロップ<br>またはファイルを選択</div>
-    <img id="image" style="max-width: 100%; display: block;">
+    <img id="image" style="max-width: 100%; display: block; opacity: 0;">
 </div>
 
 <div id="sizeModal" class="modal-overlay">
     <div class="modal">
         <h3>1. 書き出しサイズ指定</h3>
-        <div id="sizeOptions" class="size-grid">
-            </div>
+        <div id="sizeOptions" class="size-grid"></div>
         
         <div class="custom-size-area">
             <span style="font-size:12px; color:#aaa;">カスタム:</span>
@@ -201,8 +336,8 @@
         </div>
 
         <div class="modal-actions">
-            <button class="cancel-btn" id="sizeCancel">戻る</button>
-            <button class="confirm-btn" id="sizeConfirm">決定 (Enter)</button>
+            <button class="action-btn cancel-btn" id="sizeCancel">戻る</button>
+            <button class="action-btn confirm-btn" id="sizeConfirm">決定 (Enter)</button>
         </div>
     </div>
 </div>
@@ -214,37 +349,38 @@
         <div style="color:#888; font-size:12px; margin-bottom:15px;">.jpeg で保存されます</div>
 
         <div class="modal-actions">
-            <button class="cancel-btn" id="nameCancel">戻る</button>
-            <button class="confirm-btn" id="nameConfirm">実行 (Enter)</button>
+            <button class="action-btn cancel-btn" id="nameCancel">戻る</button>
+            <button class="action-btn confirm-btn" id="nameConfirm">実行 (Enter)</button>
         </div>
     </div>
 </div>
 
 <script>
+    // 要素取得
     const image = document.getElementById('image');
-    const input = document.getElementById('imageInput');
-    const ratioSelect = document.getElementById('ratioSelect');
+    // 修正: HTMLのIDに合わせて取得
+    const input = document.getElementById('imageUpload'); 
     const nextBtn = document.getElementById('nextBtn');
     
-    // モーダル関連要素
+    // ラジオボタン群の取得
+    const ratioRadios = document.querySelectorAll('input[name="aspectRatio"]');
+
+    // モーダル要素
     const sizeModal = document.getElementById('sizeModal');
     const nameModal = document.getElementById('nameModal');
-    
     const sizeOptions = document.getElementById('sizeOptions');
     const customW = document.getElementById('customW');
     const customH = document.getElementById('customH');
     const sizeCancel = document.getElementById('sizeCancel');
     const sizeConfirm = document.getElementById('sizeConfirm');
-
     const filenameInput = document.getElementById('filenameInput');
     const nameCancel = document.getElementById('nameCancel');
     const nameConfirm = document.getElementById('nameConfirm');
 
     let cropper;
-    let currentPhase = 'main'; // main -> size -> name
-    let selectedSize = null; // {width, height} or null(original)
+    let currentPhase = 'main'; 
+    let selectedSize = null; 
     
-    // ファイル名保持用
     let originalBaseName = "";
     let exifDateName = "";
 
@@ -260,17 +396,12 @@
         e.preventDefault();
         if (e.dataTransfer.files.length > 0) {
             loadFile(e.dataTransfer.files[0]);
-            input.files = e.dataTransfer.files;
+            input.files = e.dataTransfer.files; // inputにもセットしておく
         }
     });
 
-    ratioSelect.addEventListener('change', () => {
-        if (!cropper) return;
-        cropper.setAspectRatio(parseFloat(ratioSelect.value));
-    });
-
     function loadFile(file) {
-        // 元ファイル名（拡張子除去）を取得
+        // 名前処理
         const nameParts = file.name.split('.');
         if (nameParts.length > 1) nameParts.pop();
         originalBaseName = nameParts.join('.');
@@ -278,9 +409,10 @@
         const reader = new FileReader();
         reader.onload = (e) => {
             image.src = e.target.result;
+            image.style.opacity = 1; // 読み込んだら表示
             
             // EXIF日付取得
-            exifDateName = ""; // リセット
+            exifDateName = ""; 
             EXIF.getData(file, function() {
                 const date = EXIF.getTag(this, "DateTimeOriginal");
                 if (date) {
@@ -289,13 +421,17 @@
             });
 
             if (cropper) cropper.destroy();
-            const initialRatio = parseFloat(ratioSelect.value);
+
+            // 選択中のラジオボタンの値を取得
+            const checkedRadio = document.querySelector('input[name="aspectRatio"]:checked');
+            const initialVal = checkedRadio ? checkedRadio.value : '1';
+            const initialRatio = (initialVal === 'free') ? NaN : parseFloat(initialVal);
 
             cropper = new Cropper(image, {
                 aspectRatio: initialRatio,
                 viewMode: 1, 
                 dragMode: 'move',
-                autoCropArea: 0.8,
+                autoCropArea: 0.9,
                 toggleDragModeOnDblclick: false,
                 ready: function() {
                     document.activeElement.blur();
@@ -306,46 +442,83 @@
     }
 
     // ---------------------------
+    // 比率変更ロジック (中心維持)
+    // ---------------------------
+    ratioRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            if (!cropper) return;
+
+            const value = e.target.value;
+            
+            // Freeの場合
+            if (value === 'free') {
+                cropper.setAspectRatio(NaN);
+                return;
+            }
+
+            const newRatio = parseFloat(value);
+
+            // --- 中心維持計算 ---
+            const currentData = cropper.getData();
+            const centerX = currentData.x + (currentData.width / 2);
+            const centerY = currentData.y + (currentData.height / 2);
+
+            cropper.setAspectRatio(newRatio);
+
+            // 現在の「幅」を基準に高さを再計算
+            const newWidth = currentData.width;
+            const newHeight = newWidth / newRatio;
+
+            const newX = centerX - (newWidth / 2);
+            const newY = centerY - (newHeight / 2);
+
+            cropper.setData({
+                x: newX,
+                y: newY,
+                width: newWidth,
+                height: newHeight
+            });
+        });
+    });
+
+    // ---------------------------
     // Step 1: メイン画面 -> サイズ選択
     // ---------------------------
     nextBtn.addEventListener('click', openSizeModal);
 
     function openSizeModal() {
-        if (!cropper) return;
+        if (!cropper) {
+            alert("画像を読み込んでください");
+            return;
+        }
         
         currentPhase = 'size';
         sizeModal.style.display = 'flex';
         
-        // 現在のデータ取得
         const data = cropper.getData();
         const currentW = Math.round(data.width);
         const currentH = Math.round(data.height);
         const currentRatio = currentW / currentH;
 
-        // UIリセット
         sizeOptions.innerHTML = '';
         
-        // 初期状態：原寸
         selectedSize = null; 
-        customW.value = currentW; // 初期値として現在のサイズを入れておく
+        customW.value = currentW; 
         customH.value = currentH;
 
-        // 1. 原寸ボタン
+        // ボタン作成
         createSizeBtn(`そのまま\n${currentW} x ${currentH}`, {width: currentW, height: currentH}, true);
 
-        // 2. プリセット生成
         const presets = [640, 800, 1024, 1280];
         presets.forEach(w => {
             const h = Math.round(w / currentRatio);
             createSizeBtn(`幅 ${w}px\n${w} x ${h}`, {width: w, height: h}, false);
         });
 
-        // カスタム入力の連動ロジック
+        // カスタム入力連動
         const updateCustom = (isWidthChanged) => {
-            // 選択ボタンのハイライト全解除（カスタムモードであることを示すため）
             document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
             
-            // マイナス入力防止 (空文字は許容)
             let wVal = customW.value;
             let hVal = customH.value;
             if(wVal < 0) customW.value = Math.abs(wVal);
@@ -359,7 +532,6 @@
                 if (h > 0) customW.value = Math.round(h * currentRatio);
             }
             
-            // 入力値で更新
             if (customW.value && customH.value) {
                 selectedSize = {
                     width: parseInt(customW.value),
@@ -368,22 +540,16 @@
             }
         };
 
-        // イベントリスナ設定
         customW.oninput = () => updateCustom(true);
         customH.oninput = () => updateCustom(false);
         
-        // マイナス記号自体の入力を防ぐ
         [customW, customH].forEach(input => {
             input.addEventListener('keydown', (e) => {
                 if(e.key === '-' || e.key === 'e') e.preventDefault();
             });
-            // フォーカス時に全選択
-            input.addEventListener('focus', function() {
-                this.select();
-            });
+            input.addEventListener('focus', function() { this.select(); });
         });
 
-        // Enter連打で進めるよう決定ボタンへフォーカス
         sizeConfirm.focus();
     }
 
@@ -397,8 +563,6 @@
             document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             selectedSize = sizeVal;
-            
-            // カスタム欄にも値を反映
             if (sizeVal) {
                 customW.value = sizeVal.width;
                 customH.value = sizeVal.height;
@@ -413,28 +577,24 @@
     });
 
     sizeConfirm.addEventListener('click', () => {
-        // 極小サイズチェック
         if (selectedSize) {
             if (selectedSize.width < 10 || selectedSize.height < 10) {
-                alert("サイズが小さすぎます（最小 10px）");
+                alert("サイズが小さすぎます");
                 return;
             }
         }
         openNameModal();
     });
 
-
     // ---------------------------
-    // Step 2: サイズ選択 -> ファイル名入力
+    // Step 2: ファイル名入力
     // ---------------------------
     function openNameModal() {
         sizeModal.style.display = 'none';
         nameModal.style.display = 'flex';
         currentPhase = 'name';
 
-        // ファイル名の決定：日付があれば日付、なければ元ファイル名
         const defaultName = exifDateName || originalBaseName || "image";
-        
         filenameInput.value = defaultName;
         filenameInput.focus();
         setTimeout(() => filenameInput.select(), 50); 
@@ -448,39 +608,34 @@
 
     nameConfirm.addEventListener('click', executeSave);
 
-
     // ---------------------------
-    // 実行処理 & キーボード制御
+    // キーボード制御 & 保存実行
     // ---------------------------
     document.addEventListener('keydown', (e) => {
         if (e.isComposing) return;
 
-        // Enterキー制御
         if (e.key === 'Enter') {
             e.preventDefault();
-            
             if (currentPhase === 'main' && cropper) {
                 openSizeModal();
             } else if (currentPhase === 'size') {
-                // カスタム入力中ならblurさせて値を確定させる
                 if (document.activeElement === customW || document.activeElement === customH) {
                     customW.blur(); customH.blur();
                 }
-                sizeConfirm.click(); // チェックロジックを通すためclickイベント発火
+                sizeConfirm.click();
             } else if (currentPhase === 'name') {
                 executeSave();
             }
             return;
         }
 
-        // Escapeキー
         if (e.key === 'Escape') {
             if (currentPhase === 'name') nameCancel.click();
             else if (currentPhase === 'size') sizeCancel.click();
             return;
         }
 
-        // トリミング操作 (mainフェーズのみ)
+        // 矢印キーで微調整
         if (currentPhase === 'main' && cropper) {
             if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
                 e.preventDefault();
@@ -490,13 +645,13 @@
                 const moveStep = 1;
 
                 if (shift) {
+                    // サイズ変更
                     const currentRatio = data.width / data.height;
                     let deltaW = 0;
                     if (e.key === 'ArrowRight' || e.key === 'ArrowUp') deltaW = resizeStep;
                     else deltaW = -resizeStep;
                     
                     let deltaH = deltaW / currentRatio;
-                    
                     if (data.width + deltaW > 10 && data.height + deltaH > 10) {
                         data.width += deltaW;
                         data.height += deltaH;
@@ -505,6 +660,7 @@
                         cropper.setData(data);
                     }
                 } else {
+                    // 移動
                     if (e.key === 'ArrowLeft') data.x -= moveStep;
                     if (e.key === 'ArrowRight') data.x += moveStep;
                     if (e.key === 'ArrowUp') data.y -= moveStep;

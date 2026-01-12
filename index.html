@@ -2,8 +2,8 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Refinery (v8.0 Refined)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Image Refinery (v9.0 Final Tuned)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
@@ -18,6 +18,8 @@
             align-items: center;
             height: 100vh;
             overflow: hidden;
+            /* スマホでのダブルタップ拡大防止 */
+            touch-action: manipulation;
         }
 
         /* --- メインエリア --- */
@@ -74,7 +76,7 @@
 
         .ratio-display-btn {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 0 15px; height: 40px; min-width: 100px; /* 少し狭くした */
+            padding: 0 15px; height: 40px; min-width: 100px;
             text-align: left; font-size: 0.9rem;
         }
         .ratio-value { font-weight: bold; font-size: 1.1rem; }
@@ -119,27 +121,42 @@
             border-bottom: 1px solid #444; padding-bottom: 15px;
         }
 
-        /* 比率リスト (2列表示に変更) */
+        /* 比率リストレイアウト整理 */
         .ratio-list { 
             display: grid; 
             grid-template-columns: 1fr 1fr; 
             gap: 10px; 
             margin-bottom: 15px; 
         }
+        
+        /* セクション見出し（CSSだけで簡易的に隙間を作る） */
+        .ratio-group-label {
+            grid-column: span 2;
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 5px;
+            margin-bottom: -5px;
+            padding-left: 5px;
+        }
+
         .ratio-item {
-            background: #3a3a3a; border: 1px solid #444; padding: 10px;
+            background: #3a3a3a; border: 1px solid #444; padding: 8px 12px;
             border-radius: 8px; cursor: pointer; display: flex;
             align-items: center; transition: background 0.2s;
-            gap: 10px;
+            gap: 10px; height: 40px; /* 高さ固定で整列 */
         }
         .ratio-item:hover { background: #4a4a4a; border-color: #666; }
-        .ratio-item-main { font-weight: bold; font-size: 1rem; color: #fff; }
         
-        /* 比率アイコン (四角形) */
+        .ratio-info { display: flex; flex-direction: column; justify-content: center; line-height: 1.1; }
+        .ratio-item-main { font-weight: bold; font-size: 0.95rem; color: #fff; }
+        .ratio-item-sub { font-size: 0.7rem; color: #aaa; }
+        
+        /* 比率アイコン (少し小さく) */
         .ratio-shape {
             display: block;
             border: 2px solid #ccc;
             background: rgba(255,255,255,0.1);
+            flex-shrink: 0; /* 潰れないように */
         }
 
         /* カスタム入力エリア */
@@ -153,12 +170,20 @@
             width: 70px; background: #222; border: 1px solid #555;
             color: #fff; padding: 10px; border-radius: 4px; text-align: center;
             font-size: 1.1rem; font-weight: bold;
+            cursor: pointer; /* クリックできる感 */
         }
-        .ratio-input-box:focus { border-color: #007bff; outline: none; background: #000; }
+        /* キーボードを出さないための readonly スタイル */
+        .ratio-input-box[readonly] {
+            background-color: #2a2a2a; /* 入力可能に見せる */
+            caret-color: transparent; /* キャレット消去（Numpad用） */
+        }
+        .ratio-input-box:focus { 
+            border-color: #007bff; outline: none; background: #000; 
+        }
 
         /* --- テンキーパネル (初期非表示) --- */
         .numpad-container {
-            display: none; /* デフォルトで隠す */
+            display: none;
             grid-template-columns: repeat(3, 1fr);
             gap: 8px;
             background: #222;
@@ -171,15 +196,10 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
         .numpad-btn {
-            background: #3a3a3a;
-            border: 1px solid #444;
-            color: #fff;
-            padding: 12px;
-            border-radius: 6px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            cursor: pointer;
-            user-select: none;
+            background: #3a3a3a; border: 1px solid #444; color: #fff;
+            padding: 12px; border-radius: 6px; font-size: 1.2rem; font-weight: bold;
+            cursor: pointer; user-select: none;
+            touch-action: manipulation;
         }
         .numpad-btn:hover { background: #555; }
         .numpad-btn:active { background: #007bff; border-color: #007bff; }
@@ -189,7 +209,7 @@
         .size-btn {
             background: #3a3a3a; border: 1px solid #444; padding: 12px;
             color: #ccc; cursor: pointer; border-radius: 6px; text-align: center;
-            font-weight: bold;
+            font-weight: bold; font-size: 0.95rem;
         }
         .size-btn:hover, .size-btn.active { background: #007bff; color: #fff; border-color: #007bff; }
         
@@ -202,11 +222,6 @@
             width: 100%; box-sizing: border-box; margin-bottom: 20px;
             text-align: center; font-size: 18px; padding: 10px;
             background: #222; border: 1px solid #555; color: #fff; border-radius: 4px;
-        }
-
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
-            -webkit-appearance: none; margin: 0; 
         }
     </style>
 </head>
@@ -249,45 +264,67 @@
     <div class="modal">
         <h3>トリミング比率を選択</h3>
         <div class="ratio-list">
-            <div class="ratio-item" data-ratio="1.33333" data-text="4:3">
-                <span class="ratio-shape" style="width:20px; height:15px;"></span>
-                <span class="ratio-item-main">4 : 3</span>
-            </div>
-            <div class="ratio-item" data-ratio="0.75" data-text="3:4">
-                <span class="ratio-shape" style="width:15px; height:20px;"></span>
-                <span class="ratio-item-main">3 : 4</span>
-            </div>
-
+            
             <div class="ratio-item" data-ratio="1.77777" data-text="16:9">
-                <span class="ratio-shape" style="width:24px; height:13.5px;"></span>
-                <span class="ratio-item-main">16 : 9</span>
+                <span class="ratio-shape" style="width:20px; height:11px;"></span>
+                <div class="ratio-info">
+                    <span class="ratio-item-main">16 : 9</span>
+                    <span class="ratio-item-sub">Youtube</span>
+                </div>
             </div>
-            <div class="ratio-item" data-ratio="0.5625" data-text="9:16">
-                <span class="ratio-shape" style="width:13.5px; height:24px;"></span>
-                <span class="ratio-item-main">9 : 16</span>
+            <div class="ratio-item" data-ratio="1.33333" data-text="4:3">
+                <span class="ratio-shape" style="width:18px; height:13.5px;"></span>
+                <div class="ratio-info">
+                    <span class="ratio-item-main">4 : 3</span>
+                    <span class="ratio-item-sub">Photo</span>
+                </div>
             </div>
 
             <div class="ratio-item" data-ratio="1" data-text="1:1">
-                <span class="ratio-shape" style="width:18px; height:18px;"></span>
-                <span class="ratio-item-main">1 : 1</span>
+                <span class="ratio-shape" style="width:16px; height:16px;"></span>
+                <div class="ratio-info">
+                    <span class="ratio-item-main">1 : 1</span>
+                    <span class="ratio-item-sub">Square</span>
+                </div>
+            </div>
+            <div class="ratio-item" data-ratio="NaN" data-text="Free">
+                <span class="ratio-shape" style="width:16px; height:16px; border-style:dashed;"></span>
+                <div class="ratio-info">
+                    <span class="ratio-item-main">Free</span>
+                    <span class="ratio-item-sub">自由</span>
+                </div>
+            </div>
+
+            <div class="ratio-item" data-ratio="0.75" data-text="3:4">
+                <span class="ratio-shape" style="width:13.5px; height:18px;"></span>
+                <div class="ratio-info">
+                    <span class="ratio-item-main">3 : 4</span>
+                    <span class="ratio-item-sub">Photo</span>
+                </div>
             </div>
             <div class="ratio-item" data-ratio="0.8" data-text="4:5">
-                <span class="ratio-shape" style="width:16px; height:20px;"></span>
-                <span class="ratio-item-main">4 : 5</span>
+                <span class="ratio-shape" style="width:13px; height:16px;"></span>
+                <div class="ratio-info">
+                    <span class="ratio-item-main">4 : 5</span>
+                    <span class="ratio-item-sub">Insta</span>
+                </div>
             </div>
-            
-            <div class="ratio-item" data-ratio="NaN" data-text="Free" style="grid-column: span 2;">
-                <span class="ratio-shape" style="width:20px; height:20px; border-style:dashed;"></span>
-                <span class="ratio-item-main">Free</span>
+            <div class="ratio-item" data-ratio="0.5625" data-text="9:16">
+                <span class="ratio-shape" style="width:11px; height:20px;"></span>
+                <div class="ratio-info">
+                    <span class="ratio-item-main">9 : 16</span>
+                    <span class="ratio-item-sub">Story</span>
+                </div>
             </div>
+            <div class="ratio-item" style="visibility:hidden; pointer-events:none;"></div>
         </div>
 
         <div class="custom-ratio-area">
             <div style="font-size:12px; color:#aaa; margin-bottom:8px; text-align:center;">カスタム比率入力 (W : H)</div>
             <div class="custom-inputs-row">
-                <input type="number" id="ratioInputW" class="ratio-input-box numpad-target" placeholder="W" min="1">
+                <input type="number" id="ratioInputW" class="ratio-input-box numpad-target" placeholder="W" min="1" readonly>
                 <span>:</span>
-                <input type="number" id="ratioInputH" class="ratio-input-box numpad-target" placeholder="H" min="1">
+                <input type="number" id="ratioInputH" class="ratio-input-box numpad-target" placeholder="H" min="1" readonly>
             </div>
             
             <div class="numpad-container" id="ratioNumpad">
@@ -314,9 +351,9 @@
         <div class="custom-ratio-area" style="border-top:none; padding-top:0;">
             <div style="font-size:12px; color:#aaa; margin-bottom:8px; text-align:center;">カスタムサイズ (px)</div>
             <div class="custom-inputs-row">
-                <input type="number" id="customW" class="ratio-input-box numpad-target" style="width:80px;" placeholder="W">
+                <input type="number" id="customW" class="ratio-input-box numpad-target" style="width:80px;" placeholder="W" readonly>
                 <span>x</span>
-                <input type="number" id="customH" class="ratio-input-box numpad-target" style="width:80px;" placeholder="H">
+                <input type="number" id="customH" class="ratio-input-box numpad-target" style="width:80px;" placeholder="H" readonly>
             </div>
 
             <div class="numpad-container" id="sizeNumpad">
@@ -390,46 +427,58 @@
     let currentAspectRatio = 1.33333; 
 
     // ---------------------------
-    // テンキー制御
+    // テンキー制御 (スマホキーボード封印)
     // ---------------------------
     let lastFocusedInput = null; 
 
-    // ターゲット入力欄のイベント
     const numpadTargets = document.querySelectorAll('.numpad-target');
     numpadTargets.forEach(input => {
+        // focusイベントでテンキー表示＆選択状態にする
         input.addEventListener('focus', function() {
-            this.select();
+            // readonlyでもfocusは当たるので、ここでハイライト処理
+            // スマホキーボードはreadonlyなので出ない
+            
+            // 既存の値を選択状態のように見せるため一旦クリアするか、
+            // 全選択ロジックをJS側で持つ
             lastFocusedInput = this;
             
-            // Numpadを表示する
+            // 全選択状態フラグを立てる（次の入力でクリアするため）
+            this.dataset.selected = "true";
+            this.style.borderColor = "#007bff"; // 疑似フォーカス色
+
+            // 他の入力欄の色を戻す
+            numpadTargets.forEach(el => {
+                if(el !== this) {
+                    el.style.borderColor = "#555";
+                    el.dataset.selected = "false";
+                }
+            });
+            
+            // Numpadを表示
             if (ratioModal.style.display === 'flex') {
                 ratioNumpad.style.display = 'grid';
             } else if (sizeModal.style.display === 'flex') {
                 sizeNumpad.style.display = 'grid';
             }
         });
-        
+
+        // クリック時も同様
         input.addEventListener('click', function() {
-            lastFocusedInput = this;
-             // click時も念のため表示
-            if (ratioModal.style.display === 'flex') {
-                ratioNumpad.style.display = 'grid';
-            } else if (sizeModal.style.display === 'flex') {
-                sizeNumpad.style.display = 'grid';
-            }
+            this.focus();
         });
     });
 
     // テンキーボタン処理
     document.querySelectorAll('.numpad-btn').forEach(btn => {
-        btn.addEventListener('mousedown', (e) => e.preventDefault()); // フォーカス奪取防止
+        btn.addEventListener('mousedown', (e) => e.preventDefault()); 
         
         btn.addEventListener('click', () => {
             const key = btn.dataset.key;
             if (!lastFocusedInput || !lastFocusedInput.offsetParent) return;
 
             let currentVal = lastFocusedInput.value.toString();
-            const isSelectedAll = (lastFocusedInput.selectionStart === 0 && lastFocusedInput.selectionEnd === currentVal.length && currentVal.length > 0);
+            // データ属性で全選択状態を管理
+            const isSelectedAll = lastFocusedInput.dataset.selected === "true";
 
             if (key === 'C') {
                 lastFocusedInput.value = '';
@@ -437,9 +486,15 @@
                 if (isSelectedAll) lastFocusedInput.value = ''; 
                 else lastFocusedInput.value = currentVal.slice(0, -1);
             } else {
-                if (isSelectedAll) lastFocusedInput.value = key; 
-                else lastFocusedInput.value = currentVal + key; 
+                if (isSelectedAll) {
+                    lastFocusedInput.value = key; 
+                } else {
+                    lastFocusedInput.value = currentVal + key; 
+                }
             }
+            
+            // 入力したら全選択フラグは解除
+            lastFocusedInput.dataset.selected = "false";
             lastFocusedInput.dispatchEvent(new Event('input'));
         });
     });
@@ -515,7 +570,9 @@
     // ---------------------------
     openRatioModalBtn.addEventListener('click', () => {
         ratioModal.style.display = 'flex';
-        ratioNumpad.style.display = 'none'; // 最初は隠す
+        ratioNumpad.style.display = 'none'; 
+        // 疑似フォーカスリセット
+        numpadTargets.forEach(el => el.style.borderColor = "#555");
     });
 
     closeRatioModal.addEventListener('click', () => {
@@ -524,6 +581,7 @@
 
     ratioItems.forEach(item => {
         item.addEventListener('click', () => {
+            if(!item.dataset.ratio) return; // 空要素対策
             applyRatio(parseFloat(item.dataset.ratio), item.dataset.text);
         });
     });
@@ -573,7 +631,8 @@
         
         currentPhase = 'size';
         sizeModal.style.display = 'flex';
-        sizeNumpad.style.display = 'none'; // 最初は隠す
+        sizeNumpad.style.display = 'none';
+        numpadTargets.forEach(el => el.style.borderColor = "#555");
         
         const data = cropper.getData();
         const currentW = Math.round(data.width);
@@ -585,10 +644,10 @@
         customW.value = currentW; 
         customH.value = currentH;
 
-        // ボタンのテキストをシンプル化 ("幅 ??? x ???" を削除)
         createSizeBtn(`${currentW} x ${currentH}`, {width: currentW, height: currentH}, true);
 
-        const presets = [640, 800, 1024, 1280, 1920];
+        // ★候補追加: 512, 1080
+        const presets = [512, 640, 800, 1024, 1080, 1280];
         presets.forEach(w => {
             const h = Math.round(w / currentRatio);
             createSizeBtn(`${w} x ${h}`, {width: w, height: h}, false);
@@ -626,6 +685,11 @@
             if (sizeVal) {
                 customW.value = sizeVal.width;
                 customH.value = sizeVal.height;
+                // テンキー連携用フォーカス更新
+                lastFocusedInput = customW;
+                customW.dataset.selected = "true";
+                customW.style.borderColor = "#007bff";
+                customH.style.borderColor = "#555";
             }
         });
         sizeOptions.appendChild(btn);

@@ -112,7 +112,13 @@
     saveBtn.addEventListener('click', saveImage);
 
     document.addEventListener('keydown', (e) => {
+        // ファイル名入力欄にフォーカスがある場合
         if (e.target === filenameInput) {
+            // 日本語変換中（isComposingがtrue）なら何もしないで抜ける
+            if (e.isComposing) {
+                return;
+            }
+
             if (e.key === 'Enter') {
                 e.preventDefault();
                 saveImage();

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Refinery (v3.1)</title>
+    <title>Image Refinery (v3.2)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
@@ -19,23 +19,33 @@
             height: 100vh;
             overflow: hidden;
         }
+        /* コントロールエリアを2段構成にして整理 */
         .controls {
-            padding: 15px;
+            padding: 10px 15px;
             background: #333;
             width: 100%;
             box-sizing: border-box;
             display: flex;
+            flex-direction: column;
             gap: 10px;
             align-items: center;
             justify-content: center;
             border-bottom: 1px solid #444;
             flex-shrink: 0;
-            flex-wrap: wrap; /* 画面が狭い時に折り返す */
         }
+        .row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+        }
+        
         .img-container {
             flex-grow: 1;
             width: 100%;
-            height: calc(100vh - 80px); /* コントロールの高さ分調整 */
+            height: calc(100vh - 100px); /* コントロールの高さ分調整 */
             background: #000;
             overflow: hidden;
             position: relative;
@@ -49,66 +59,106 @@
             text-align: center;
             pointer-events: none;
         }
-        input[type="text"] {
-            padding: 8px;
+
+        /* 入力周りのデザイン */
+        input[type="text"], input[type="number"], select {
+            padding: 6px;
             border-radius: 4px;
             border: 1px solid #555;
             background: #222;
             color: #fff;
-            width: 120px;
+            font-size: 14px;
             text-align: center;
-            font-size: 16px;
         }
-        select {
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px solid #555;
-            background: #222;
-            color: #fff;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        input[type="text"]:focus, select:focus {
+        input[type="text"]:focus, input[type="number"]:focus, select:focus {
             border-color: #007bff;
             outline: none;
         }
+        
+        /* 情報表示エリア */
+        .info-badge {
+            font-family: monospace;
+            font-size: 13px;
+            background: #444;
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: #ccc;
+        }
+        .info-label {
+            color: #888;
+            margin-right: 4px;
+        }
+        .info-val {
+            color: #fff;
+            font-weight: bold;
+        }
+
         button {
-            padding: 8px 20px;
+            padding: 6px 16px;
             background-color: #007bff;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-weight: bold;
-            font-size: 16px;
+            font-size: 14px;
             white-space: nowrap;
         }
         button:hover { background-color: #0056b3; }
-        
-        /* ファイル入力を少し見やすく */
-        #imageInput {
-            max-width: 200px;
-            color: #aaa;
+
+        /* グループ分けの区切り線 */
+        .divider {
+            width: 1px;
+            height: 24px;
+            background: #555;
+            margin: 0 5px;
         }
     </style>
 </head>
 <body>
 
 <div class="controls">
-    <input type="file" id="imageInput" accept="image/*">
-    
-    <select id="presetSelect">
-        <option value="vga" selected>4:3 VGA (640x480)</option>
-        <option value="xga">4:3 XGA (1024x768)</option>
-        <option value="sq_s">1:1 S (640x640)</option>
-        <option value="sq_l">1:1 L (1024x1024)</option>
-        <option value="wide">16:9 Wide (854x480)</option>
-        <option value="hd">16:9 HD (1280x720)</option>
-    </select>
+    <div class="row">
+        <input type="file" id="imageInput" accept="image/*" style="max-width: 180px; color: #aaa;">
+        <div class="divider"></div>
+        <span class="info-badge">
+            <span class="info-label">元画像:</span>
+            <span id="originalSize" class="info-val">- x -</span>
+        </span>
+        <span class="info-badge">
+            <span class="info-label">選択範囲:</span>
+            <span id="cropSize" class="info-val">- x -</span>
+        </span>
+    </div>
 
-    <input type="text" id="filenameInput" placeholder="YYYYMMDD">
-    <span>.jpeg</span>
-    <button id="saveBtn">保存 (Enter)</button>
+    <div class="row">
+        <select id="ratioSelect" title="トリミング比率">
+            <option value="1.33333" selected>比率 4:3</option>
+            <option value="1">比率 1:1 (正方形)</option>
+            <option value="1.77777">比率 16:9</option>
+            <option value="1.5">比率 3:2</option>
+            <option value="NaN">フリー (自由)</option>
+        </select>
+
+        <div class="divider"></div>
+
+        <select id="resizePreset" title="保存時の横幅プリセット">
+            <option value="">リサイズなし (原寸)</option>
+            <option value="640">幅 640px</option>
+            <option value="800">幅 800px</option>
+            <option value="1024">幅 1024px</option>
+            <option value="1280">幅 1280px</option>
+            <option value="1920">幅 1920px</option>
+        </select>
+        <span>幅:</span>
+        <input type="number" id="outputWidth" placeholder="自動" style="width: 70px;" title="保存時の横幅（空欄なら原寸）">
+        <span>px</span>
+
+        <div class="divider"></div>
+
+        <input type="text" id="filenameInput" placeholder="YYYYMMDD" style="width: 100px;">
+        <button id="saveBtn">保存 (Enter)</button>
+    </div>
 </div>
 
 <div class="img-container">
@@ -121,27 +171,66 @@
     const input = document.getElementById('imageInput');
     const filenameInput = document.getElementById('filenameInput');
     const saveBtn = document.getElementById('saveBtn');
-    const presetSelect = document.getElementById('presetSelect');
+    
+    const ratioSelect = document.getElementById('ratioSelect');
+    const resizePreset = document.getElementById('resizePreset');
+    const outputWidthInput = document.getElementById('outputWidth');
+    
+    const originalSizeDisplay = document.getElementById('originalSize');
+    const cropSizeDisplay = document.getElementById('cropSize');
+
     let cropper;
 
-    // プリセット定義：ここをいじれば好きなサイズを追加できる
-    const presets = {
-        'vga':  { ratio: 4/3, width: 640,  height: 480 },
-        'xga':  { ratio: 4/3, width: 1024, height: 768 },
-        'sq_s': { ratio: 1,   width: 640,  height: 640 },
-        'sq_l': { ratio: 1,   width: 1024, height: 1024 },
-        'wide': { ratio: 16/9, width: 854,  height: 480 },
-        'hd':   { ratio: 16/9, width: 1280, height: 720 }
-    };
+    // リサイズプリセットを選んだら数値入力欄に反映
+    resizePreset.addEventListener('change', () => {
+        outputWidthInput.value = resizePreset.value;
+    });
+    // 数値入力欄をいじったらプリセットを「カスタム」状態（空ではないが一致もしない見た目）にする
+    outputWidthInput.addEventListener('input', () => {
+        // 必要ならここでpresetSelectの値を調整できるが、今回はそのままでOK
+    });
 
-    // プリセット変更時の処理
-    presetSelect.addEventListener('change', () => {
+    // 比率変更時の処理
+    ratioSelect.addEventListener('change', () => {
         if (!cropper) return;
-        const key = presetSelect.value;
-        const setting = presets[key];
+        const ratio = parseFloat(ratioSelect.value);
+        cropper.setAspectRatio(ratio);
         
-        // アスペクト比を即座に反映
-        cropper.setAspectRatio(setting.ratio);
+        // 比率変更時に「中央80%」に再設定する
+        // setCropBoxDataを使う手もあるが、setDataでキャンバス基準で計算するのが確実
+        setTimeout(() => {
+            const containerData = cropper.getContainerData();
+            // 画像の表示領域データ
+            const canvasData = cropper.getCanvasData();
+            
+            // 画像の中心
+            const cx = canvasData.left + (canvasData.width / 2);
+            const cy = canvasData.top + (canvasData.height / 2);
+
+            // 新しい幅・高さ（画像の80%を目指す）
+            // 比率に合わせて計算が必要
+            let newWidth = canvasData.width * 0.8;
+            let newHeight = newWidth / ratio;
+
+            // もし高さが画像からはみ出るなら、高さ基準で80%に合わせる
+            if (newHeight > canvasData.height * 0.8) {
+                newHeight = canvasData.height * 0.8;
+                newWidth = newHeight * ratio;
+            }
+            
+            // フリー選択の場合は単純に画像の80%
+            if (isNaN(ratio)) {
+                 newWidth = canvasData.width * 0.8;
+                 newHeight = canvasData.height * 0.8;
+            }
+
+            cropper.setCropBoxData({
+                left: cx - (newWidth / 2),
+                top: cy - (newHeight / 2),
+                width: newWidth,
+                height: newHeight
+            });
+        }, 10);
     });
 
     input.addEventListener('change', (e) => {
@@ -160,60 +249,43 @@
     saveBtn.addEventListener('click', saveImage);
 
     document.addEventListener('keydown', (e) => {
-        if (e.target === filenameInput) {
+        // 入力フォーム内でのEnterは保存
+        if (['TEXT', 'NUMBER'].includes(e.target.type?.toUpperCase())) {
             if (e.isComposing) return;
             if (e.key === 'Enter') {
                 e.preventDefault();
                 saveImage();
-                filenameInput.blur();
+                e.target.blur();
             }
             return;
-        }
-        
-        // セレクトボックスにフォーカスがある時のEnter誤爆を防ぐ（お好みで）
-        if (e.target === presetSelect && e.key === 'Enter') {
-             e.preventDefault();
-             saveImage();
-             presetSelect.blur();
-             return;
         }
 
         if (!cropper) return;
 
+        // 矢印キー操作（前回同様）
         if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
             e.preventDefault();
             let data = cropper.getData();
             const shift = e.shiftKey;
-            
-            // サイズ変更ロジックは前回と同じ
             const resizeStep = 4; 
             const moveStep = 1;
 
             if (shift) {
-                // 現在のプリセットの比率を取得して計算に使う
-                const currentKey = presetSelect.value;
-                const targetRatio = presets[currentKey].ratio;
-
+                // アスペクト比固定のリサイズ
+                const currentRatio = data.width / data.height; // 現在の実際の比率を使う
+                
                 let deltaW = 0;
-                if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
-                    deltaW = resizeStep;
-                } else {
-                    deltaW = -resizeStep;
-                }
+                if (e.key === 'ArrowRight' || e.key === 'ArrowUp') deltaW = resizeStep;
+                else deltaW = -resizeStep;
 
-                // 幅に合わせて高さを計算（比率維持）
-                let deltaH = deltaW / targetRatio;
+                let deltaH = deltaW / currentRatio;
 
-                let newWidth = data.width + deltaW;
-                let newHeight = data.height + deltaH;
-                let newX = data.x - (deltaW / 2);
-                let newY = data.y - (deltaH / 2);
-
-                if (newWidth > 10 && newHeight > 10) {
-                    data.width = newWidth;
-                    data.height = newHeight;
-                    data.x = newX;
-                    data.y = newY;
+                // 最小サイズガード
+                if (data.width + deltaW > 10 && data.height + deltaH > 10) {
+                    data.width += deltaW;
+                    data.height += deltaH;
+                    data.x -= (deltaW / 2);
+                    data.y -= (deltaH / 2);
                     cropper.setData(data);
                 }
             } else {
@@ -236,6 +308,13 @@
         reader.onload = (e) => {
             image.src = e.target.result;
             
+            // 画像のオリジナルの大きさを取得するためにImageオブジェクトを作る
+            const tempImg = new Image();
+            tempImg.onload = function() {
+                originalSizeDisplay.textContent = `${this.naturalWidth} x ${this.naturalHeight}`;
+            };
+            tempImg.src = image.src;
+
             EXIF.getData(file, function() {
                 const date = EXIF.getTag(this, "DateTimeOriginal");
                 if (date) {
@@ -248,16 +327,20 @@
 
             if (cropper) cropper.destroy();
             
-            // 初期化時の比率設定
-            const initialKey = presetSelect.value;
-            const initialRatio = presets[initialKey].ratio;
+            const initialRatio = parseFloat(ratioSelect.value);
 
             cropper = new Cropper(image, {
                 aspectRatio: initialRatio,
                 viewMode: 1, 
                 dragMode: 'move',
-                autoCropArea: 0.8,
+                autoCropArea: 0.8, // これで初期ロード時はおおよそ80%になる
                 toggleDragModeOnDblclick: false,
+                crop: function(event) {
+                    // 切り抜き範囲が動くたびにサイズ表示を更新
+                    const w = Math.round(event.detail.width);
+                    const h = Math.round(event.detail.height);
+                    cropSizeDisplay.textContent = `${w} x ${h}`;
+                },
                 ready: function() {
                     document.activeElement.blur();
                 }
@@ -276,22 +359,26 @@
             return;
         }
 
-        // 現在選択されているプリセットのサイズで書き出す
-        const currentKey = presetSelect.value;
-        const setting = presets[currentKey];
-
-        const canvas = cropper.getCroppedCanvas({
-            width: setting.width,
-            height: setting.height,
+        // 保存設定の作成
+        const options = {
             imageSmoothingEnabled: true,
             imageSmoothingQuality: 'high'
-        });
+        };
+
+        // 指定幅があるかチェック
+        const targetWidth = parseInt(outputWidthInput.value);
+        if (targetWidth && targetWidth > 0) {
+            options.width = targetWidth;
+            // 高さは比率におまかせ（CropperJSが自動計算するが、明示したい場合は計算する）
+        }
+
+        const canvas = cropper.getCroppedCanvas(options);
 
         canvas.toBlob((blob) => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = filename + '.jpeg'; // 必要なら連番処理もここに追加できる
+            a.download = filename + '.jpeg';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);

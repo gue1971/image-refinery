@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Image Refinery (v20.0 Ultimate)</title>
+    <title>Image Refinery (v21.0 Modern UI)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
@@ -25,7 +25,7 @@
         .img-container {
             flex-grow: 1;
             width: 100%;
-            height: calc(100vh - 80px); /* コントロールバー分引く */
+            height: calc(100vh - 80px);
             background: #000;
             overflow: hidden;
             position: relative;
@@ -40,45 +40,44 @@
             z-index: 0;
         }
 
-        /* --- 情報オーバーレイ (New!) --- */
-        /* 画像の上に浮かせるスタイルに変更 */
+        /* --- 情報オーバーレイ (1行に変更) --- */
         .info-overlay {
             position: absolute;
             top: 15px; left: 15px;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.6);
             backdrop-filter: blur(4px);
-            padding: 8px 12px;
-            border-radius: 8px;
+            padding: 8px 15px;
+            border-radius: 20px; /* 丸みを強く */
             border: 1px solid rgba(255,255,255,0.1);
             color: rgba(255,255,255,0.8);
             font-size: 0.75rem;
-            pointer-events: none; /* 操作の邪魔にならないように */
+            pointer-events: none;
             z-index: 5;
             display: flex;
-            flex-direction: column;
-            gap: 2px;
+            align-items: center;
+            gap: 15px; /* 項目間の間隔 */
         }
-        .info-row { display: flex; gap: 8px; }
+        .info-row { display: flex; gap: 6px; align-items: center; }
         .info-val {
-            font-family: monospace;
+            font-family: "SF Mono", "Menlo", "Monaco", "Courier New", monospace;
             font-weight: bold;
             color: #fff;
         }
 
-        /* --- コントロールパネル (1行に収める) --- */
+        /* --- コントロールパネル (左寄せ) --- */
         .controls-panel-custom {
             width: 100%;
-            padding: 10px 20px; /* 上下左右の余白 */
+            padding: 10px 20px;
             box-sizing: border-box;
             background: #333;
             border-bottom: 1px solid #444;
             display: flex;
             align-items: center;
-            /* ボタンを等間隔に配置 */
-            justify-content: space-between; 
-            gap: 10px;
+            /* ★変更: 左寄せ */
+            justify-content: flex-start; 
+            gap: 20px; /* ボタン間の余白 */
             z-index: 20;
-            height: 80px; /* 高さ固定 */
+            height: 80px;
         }
 
         /* ガラス風共通 */
@@ -88,47 +87,51 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
             color: #fff;
-            border-radius: 12px; /* 少し丸く */
+            border-radius: 12px;
             cursor: pointer; 
             transition: all 0.2s;
             
-            /* ボタンサイズ統一 */
             height: 50px;
             min-width: 50px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
             font-weight: bold;
-            padding: 0 15px; /* 横幅に少し余裕を */
+            padding: 0 15px;
         }
         .glass-btn:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-1px); }
         .glass-btn.active { background: rgba(0, 123, 255, 0.6); border-color: #007bff; color: #fff; }
 
+        /* SVGアイコン用スタイル */
+        .icon-svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+
         /* ファイル選択 */
         .file-upload-wrapper input[type="file"] { display: none; }
-        .custom-file-upload { padding: 0; width: 50px; } /* 正方形 */
+        .custom-file-upload { padding: 0; width: 50px; }
 
-        /* 比率ボタン (文字含むので少し広く) */
+        /* 比率ボタン */
         .ratio-display-btn {
-            flex-grow: 1; /* 余ったスペースを使う */
-            max-width: 120px;
+            min-width: 100px;
             justify-content: space-between;
             font-size: 1rem;
         }
-        .ratio-icon { font-size: 0.8rem; color: #aaa; margin-left: 5px; }
+        .ratio-icon { font-size: 0.8rem; color: #aaa; margin-left: 8px; }
 
         /* 保存ボタン */
         .save-btn {
             background: linear-gradient(135deg, #007bff, #0056b3);
             border: none;
-            width: 50px; /* 正方形 */
+            width: 50px; 
             padding: 0;
         }
         .save-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
 
 
-        /* --- 微調整コントローラー (隙間なし) --- */
+        /* --- 微調整コントローラー --- */
         #fineTuneController {
             display: none;
             position: absolute;
@@ -147,7 +150,7 @@
             background: transparent;
             border: none;
             display: grid;
-            gap: 0; /* ★ 隙間ゼロ！ */
+            gap: 0;
         }
 
         .tune-btn {
@@ -164,29 +167,20 @@
             transition: transform 0.1s, background 0.1s;
             -webkit-tap-highlight-color: transparent;
         }
-        
         .tune-btn:active { 
             background: rgba(0, 123, 255, 0.6); 
             color: #fff;
             transform: scale(0.95);
         }
 
-        /* 左: サイズ */
-        .size-pad { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 10px; /* こっちは少し空ける */
-        }
+        .size-pad { display: flex; flex-direction: column; gap: 10px; }
         
-        /* 右: 移動 (隙間ゼロで配置) */
         .move-pad {
             display: grid;
             grid-template-areas: 
                 ". up ."
                 "left . right"
                 ". down .";
-            /* ボタンが丸いので、gap:0でも視覚的には少し空いて見えるが
-               操作感は「詰まっている」状態になる */
         }
         .btn-up { grid-area: up; }
         .btn-down { grid-area: down; }
@@ -287,7 +281,7 @@
 <div class="controls-panel-custom">
     <div class="file-upload-wrapper">
         <label for="imageUpload" class="custom-file-upload glass-btn" title="画像を開く">
-            <span style="font-size: 1.4rem;">📂</span>
+            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
         </label>
         <input type="file" id="imageUpload" accept="image/*">
     </div>
@@ -297,12 +291,12 @@
         <span class="ratio-icon">▼</span>
     </div>
 
-    <div id="toggleFineTuneBtn" class="custom-file-upload glass-btn" style="width: 50px; font-size: 1.6rem;" title="微調整コントローラー">
-        ✥
+    <div id="toggleFineTuneBtn" class="custom-file-upload glass-btn" style="width: 50px;" title="微調整">
+        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/></svg>
     </div>
 
     <button id="nextBtn" class="save-btn glass-btn" title="保存へ進む">
-        <span style="font-size: 1.4rem;">💾</span>
+        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
     </button>
 </div>
 
@@ -311,9 +305,9 @@
     
     <div class="info-overlay">
         <div class="info-row">
-            <span>Orig:</span><span id="originalSizeText" class="info-val">-</span>
+            <span>Original:</span><span id="originalSizeText" class="info-val">-</span>
         </div>
-        <div class="info-row">
+        <div class="info-row" style="border-left: 1px solid rgba(255,255,255,0.3); padding-left: 15px;">
             <span>Crop:</span><span id="cropSizeText" class="info-val">-</span>
         </div>
     </div>
@@ -461,8 +455,6 @@
     const ratioModal = document.getElementById('ratioModal');
     const closeRatioModal = document.getElementById('closeRatioModal');
     const currentRatioValue = document.getElementById('currentRatioValue');
-    
-    // パネル移動に伴いID参照先も変更不要だが、一応明示
     const originalSizeText = document.getElementById('originalSizeText');
     const cropSizeText = document.getElementById('cropSizeText');
 

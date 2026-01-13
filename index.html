@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Image Refinery (v26.0 Transparent & Balanced)</title>
+    <title>Image Refinery (v26.1 FineTune Enhanced)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
@@ -121,7 +121,7 @@
         .save-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
 
 
-        /* --- 微調整コントローラー (透過・バランス調整) --- */
+        /* --- 微調整コントローラー (透過・バランス調整・速度切替) --- */
         #fineTuneController {
             display: none;
             position: absolute;
@@ -142,10 +142,9 @@
         }
 
         .tune-btn {
-            /* ★変更: 透過度を高める (0.3 -> 0.15) */
+            /* 透過度を高めに設定 */
             background: rgba(0, 0, 0, 0.15);
             border: none;
-            /* 文字色も少し薄く */
             color: rgba(255, 255, 255, 0.6);
             border-radius: 50%;
             width: 72px; height: 72px; 
@@ -166,26 +165,22 @@
             transform: scale(0.95);
         }
 
-        /* 左: サイズ (中央寄せ) */
+        /* 左: サイズ (間隔を広げて右側とバランス調整) */
         .size-pad { 
             display: flex; 
             flex-direction: column; 
-            /* ★変更: 間隔を広げて右側と合わせる */
             gap: 16px; 
             justify-content: center;
         }
         
-        /* 右: 移動 (グリッドで間隔を空ける) */
+        /* 右: 移動 (グリッドで間隔を空け、中央にスペースを作る) */
         .move-pad {
             display: grid;
             grid-template-areas: 
                 ". up ."
-                "left . right"
+                "left center right"
                 ". down .";
-            /* ★変更: 上下左右の間隔をしっかり空ける */
-            gap: 16px;
-            
-            /* width/heightの固定を解除 */
+            gap: 12px;
             width: auto; height: auto;
         }
         
@@ -193,6 +188,23 @@
         .btn-down { grid-area: down; }
         .btn-left { grid-area: left; }
         .btn-right { grid-area: right; }
+
+        /* 新設：中央の速度切替ボタン */
+        .btn-center { 
+            grid-area: center; 
+            font-size: 1rem; 
+            font-weight: bold;
+            border-radius: 12px; /* 丸ではなく角丸四角で区別 */
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            width: 72px; height: 72px;
+        }
+        .btn-center.active-speed {
+            background: rgba(0, 123, 255, 0.6);
+            border: 1px solid rgba(255,255,255,0.3);
+            box-shadow: 0 0 10px rgba(0,123,255,0.5);
+            color: #fff;
+        }
 
 
         /* --- モーダル共通 --- */
@@ -324,6 +336,7 @@
         <div class="tune-pad move-pad">
             <div class="tune-btn btn-up" id="btnMoveUp">▲</div>
             <div class="tune-btn btn-left" id="btnMoveLeft">◀</div>
+            <div class="tune-btn btn-center" id="btnSpeedToggle">1px</div>
             <div class="tune-btn btn-right" id="btnMoveRight">▶</div>
             <div class="tune-btn btn-down" id="btnMoveDown">▼</div>
         </div>
@@ -490,6 +503,8 @@
     let currentAspectRatio = 1.33333; 
 
     // --- 微調整機能 ---
+    let moveStep = 1; // デフォルト移動量
+
     toggleFineTuneBtn.addEventListener('click', () => {
         if (!cropper) return;
         const isVisible = fineTuneController.style.display === 'flex';
@@ -497,19 +512,38 @@
         toggleFineTuneBtn.classList.toggle('active');
     });
 
+    // 速度切り替えボタンの処理
+    const btnSpeedToggle = document.getElementById('btnSpeedToggle');
+    btnSpeedToggle.addEventListener('click', () => {
+        if (moveStep === 1) {
+            moveStep = 5;
+            btnSpeedToggle.innerText = "5px";
+            btnSpeedToggle.classList.add('active-speed');
+        } else {
+            moveStep = 1;
+            btnSpeedToggle.innerText = "1px";
+            btnSpeedToggle.classList.remove('active-speed');
+        }
+    });
+
     const fineTuneAction = (action) => {
         if (!cropper) return;
         const data = cropper.getData();
         const currentRatio = isNaN(currentAspectRatio) ? (data.width / data.height) : currentAspectRatio;
         
-        if (action === 'up') data.y -= 1;
-        if (action === 'down') data.y += 1;
-        if (action === 'left') data.x -= 1;
-        if (action === 'right') data.x += 1;
+        // 現在のステップを適用
+        const step = moveStep;
+
+        if (action === 'up') data.y -= step;
+        if (action === 'down') data.y += step;
+        if (action === 'left') data.x -= step;
+        if (action === 'right') data.x += step;
         
         if (action === 'zoomIn' || action === 'zoomOut') {
-            const delta = (action === 'zoomIn') ? 1 : -1;
+            const delta = (action === 'zoomIn') ? step : -step;
             const newWidth = data.width + delta;
+            
+            // 安全策
             if (newWidth < 10) return;
 
             let newHeight;

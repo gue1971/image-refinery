@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Image Refinery (v17.0 Stealth)</title>
+    <title>Image Refinery (v18.0 Big & Round)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
@@ -66,7 +66,6 @@
         }
         .glass-btn { cursor: pointer; transition: all 0.2s; }
         .glass-btn:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-1px); }
-        /* コントローラー起動中はアイコンを青く */
         .glass-btn.active { background: rgba(0, 123, 255, 0.6); border-color: #007bff; color: #fff; }
 
         .file-upload-wrapper input[type="file"] { display: none; }
@@ -107,56 +106,60 @@
         .save-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
 
 
-        /* --- 微調整コントローラー (ステルス仕様) --- */
+        /* --- 微調整コントローラー --- */
         #fineTuneController {
-            display: none; /* 初期非表示 */
+            display: none;
             position: absolute;
-            /* ★修正: 位置をかなり上に上げて、アドレスバー回避 */
             bottom: 120px; 
             left: 50%;
             transform: translateX(-50%);
-            width: 90%; max-width: 400px;
+            width: 90%; max-width: 450px; /* 少し広げた */
             justify-content: space-between;
             align-items: flex-end;
             pointer-events: none;
             z-index: 15;
         }
         
-        /* 操作パッド (背景削除) */
         .tune-pad {
             pointer-events: auto;
-            /* ★修正: 背景・枠線を消して透明に */
             background: transparent;
             border: none;
             box-shadow: none;
             backdrop-filter: none;
-            
             display: grid;
-            gap: 5px; /* ボタン間隔を少し詰める */
+            gap: 8px; 
         }
 
-        /* ボタン (透過・ステルス) */
+        /* ボタン (デカく、透過、丸く) */
         .tune-btn {
-            /* ★修正: うっすら黒透けのみ */
             background: rgba(0, 0, 0, 0.3);
-            border: none; /* 枠線なし */
-            color: #fff;
-            border-radius: 50%; /* 丸ボタンにして親しみやすく */
-            width: 48px; height: 48px; /* 少し大きくして押しやすく */
+            border: none;
+            color: rgba(255, 255, 255, 0.6); /* ★アイコンも半透明に */
+            border-radius: 50%; /* 完全な丸 */
+            
+            /* ★サイズアップ (1.5倍) */
+            width: 72px; height: 72px; 
+            font-size: 2rem; 
+            
             display: flex; align-items: center; justify-content: center;
-            font-size: 1.4rem; cursor: pointer;
+            cursor: pointer;
             user-select: none;
-            /* 文字が見やすいように影をつける */
-            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
             transition: transform 0.1s, background 0.1s;
+            
+            /* ★スマホの四角いハイライトを消す呪文 */
+            -webkit-tap-highlight-color: transparent;
         }
+        
+        /* 押した時の反応 (丸のまま光る) */
         .tune-btn:active { 
             background: rgba(0, 123, 255, 0.6); 
-            transform: scale(0.95);
+            color: #fff;
+            transform: scale(0.92);
         }
 
         /* 左: サイズ */
-        .size-pad { grid-template-rows: 1fr 1fr; gap: 15px; }
+        .size-pad { grid-template-rows: 1fr 1fr; gap: 20px; }
         
         /* 右: 移動 */
         .move-pad {

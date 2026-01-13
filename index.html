@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Image Refinery (v27.0 Header Info)</title>
+    <title>Image Refinery (v28.0 Squashed Cross)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
@@ -49,20 +49,12 @@
             border-bottom: 1px solid #444;
             display: flex;
             align-items: center;
-            justify-content: space-between; /* 左右に分ける */
+            justify-content: space-between; 
             height: 60px;
             z-index: 20;
         }
 
-        /* 左側グループ (操作系) */
-        .controls-left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        /* 右側グループ (情報＋保存) */
-        .controls-right {
+        .controls-left, .controls-right {
             display: flex;
             align-items: center;
             gap: 12px;
@@ -73,20 +65,13 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
-            align-items: flex-end; /* 右寄せ */
+            align-items: flex-end; 
             font-size: 0.7rem;
             line-height: 1.3;
             color: #aaa;
-            /* 幅確保 */
             min-width: 80px; 
         }
-        .info-row {
-            display: flex;
-            gap: 6px;
-        }
-        .info-label {
-            display: inline-block;
-        }
+        .info-row { display: flex; gap: 6px; }
         .info-val {
             font-family: "SF Mono", "Menlo", "Monaco", "Courier New", monospace;
             font-weight: bold;
@@ -103,10 +88,8 @@
             border-radius: 8px;
             cursor: pointer; 
             transition: all 0.2s;
-            
             height: 40px;
             min-width: 40px;
-            
             display: flex;
             align-items: center;
             justify-content: center;
@@ -118,11 +101,9 @@
 
         .icon-svg { width: 20px; height: 20px; fill: currentColor; }
 
-        /* ファイル選択 */
         .file-upload-wrapper input[type="file"] { display: none; }
         .custom-file-upload { padding: 0; width: 40px; }
 
-        /* 比率ボタン */
         .ratio-display-btn {
             min-width: 80px;
             justify-content: space-between;
@@ -130,7 +111,6 @@
         }
         .ratio-icon { font-size: 0.7rem; color: #aaa; margin-left: 4px; }
 
-        /* 保存ボタン */
         .save-btn {
             background: linear-gradient(135deg, #007bff, #0056b3);
             border: none;
@@ -154,12 +134,13 @@
             z-index: 15;
         }
         
+        /* 操作パッド共通 */
         .tune-pad {
             pointer-events: auto;
-            background: transparent;
-            border: none;
+            position: relative;
         }
 
+        /* ボタン共通 */
         .tune-btn {
             background: rgba(0, 0, 0, 0.4);
             border: 2px solid rgba(255,255,255,0.1);
@@ -172,6 +153,7 @@
             user-select: none;
             transition: transform 0.1s, background 0.1s;
             -webkit-tap-highlight-color: transparent;
+            position: absolute; /* 絶対配置で制御 */
             padding: 0;
             line-height: 1;
         }
@@ -180,30 +162,31 @@
             background: rgba(0, 123, 255, 0.7); 
             border-color: rgba(0, 123, 255, 0.8);
             transform: scale(0.92);
+            z-index: 10;
         }
 
-        /* 左: サイズ */
-        .size-pad { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 20px; 
+        /* --- 左: サイズ (縦並び) --- */
+        .size-pad {
+            width: 60px; 
+            height: 140px; /* 上下に少し隙間を持たせる */
+        }
+        #btnZoomIn { top: 0; left: 0; }
+        #btnZoomOut { bottom: 0; left: 0; }
+        
+        /* --- 右: 移動 (扁平十字配置) --- */
+        .move-pad {
+            /* ★ここがポイント: 横長にして上下を詰める */
+            width: 170px; /* 左右の広がり */
+            height: 120px; /* 上下の詰まり具合 (ボタン60px x2 = 120px なので接触する距離) */
         }
         
-        /* 右: 移動 (ひし形) */
-        .move-pad {
-            display: grid;
-            grid-template-columns: 60px 60px 60px;
-            grid-template-rows: 60px 60px 60px;
-            gap: 5px; 
-            grid-template-areas: 
-                ". up ."
-                "left . right"
-                ". down .";
-        }
-        .btn-up   { grid-area: up; }
-        .btn-down { grid-area: down; }
-        .btn-left { grid-area: left; }
-        .btn-right{ grid-area: right; }
+        /* 上下: コンテナの上下端に配置（高さが低いので中央に寄る） */
+        #btnMoveUp    { top: 0; left: 50%; transform: translateX(-50%); }
+        #btnMoveDown  { bottom: 0; left: 50%; transform: translateX(-50%); }
+        
+        /* 左右: コンテナの左右端・垂直中央 */
+        #btnMoveLeft  { top: 50%; left: 0; transform: translateY(-50%); }
+        #btnMoveRight { top: 50%; right: 0; transform: translateY(-50%); }
 
 
         /* --- モーダル共通 --- */
@@ -297,7 +280,6 @@
 <body>
 
 <div class="controls-panel-custom">
-    
     <div class="controls-left">
         <div class="file-upload-wrapper">
             <label for="imageUpload" class="custom-file-upload glass-btn" title="画像を開く">
@@ -318,21 +300,14 @@
 
     <div class="controls-right">
         <div class="info-box">
-            <div class="info-row">
-                <span class="info-label">Original:</span>
-                <span id="originalSizeText" class="info-val">-</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Crop:</span>
-                <span id="cropSizeText" class="info-val">-</span>
-            </div>
+            <div class="info-row"><span class="info-label">Original:</span><span id="originalSizeText" class="info-val">-</span></div>
+            <div class="info-row"><span class="info-label">Crop:</span><span id="cropSizeText" class="info-val">-</span></div>
         </div>
 
         <button id="nextBtn" class="save-btn glass-btn" title="保存へ進む">
             <svg class="icon-svg" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
         </button>
     </div>
-
 </div>
 
 <div class="img-container">
@@ -349,16 +324,16 @@
             </div>
         </div>
         <div class="tune-pad move-pad">
-            <div class="tune-btn btn-up" id="btnMoveUp">
+            <div class="tune-btn" id="btnMoveUp">
                 <svg class="icon-svg" viewBox="0 0 24 24" style="width:32px; height:32px;"><path d="M7 14l5-5 5 5z"/></svg>
             </div>
-            <div class="tune-btn btn-left" id="btnMoveLeft">
+            <div class="tune-btn" id="btnMoveLeft">
                 <svg class="icon-svg" viewBox="0 0 24 24" style="width:32px; height:32px;"><path d="M14 7l-5 5 5 5z"/></svg>
             </div>
-            <div class="tune-btn btn-right" id="btnMoveRight">
+            <div class="tune-btn" id="btnMoveRight">
                 <svg class="icon-svg" viewBox="0 0 24 24" style="width:32px; height:32px;"><path d="M10 17l5-5-5-5z"/></svg>
             </div>
-            <div class="tune-btn btn-down" id="btnMoveDown">
+            <div class="tune-btn" id="btnMoveDown">
                 <svg class="icon-svg" viewBox="0 0 24 24" style="width:32px; height:32px;"><path d="M7 10l5 5 5-5z"/></svg>
             </div>
         </div>

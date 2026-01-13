@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Image Refinery (v29.0 Touch Handles)</title>
+    <title>Image Refinery (v30.0 Perfect Align)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
@@ -18,7 +18,12 @@
             align-items: center;
             height: 100vh;
             overflow: hidden;
+            
+            /* --- 長押しメニュー・選択の無効化 --- */
             touch-action: manipulation;
+            -webkit-touch-callout: none; /* iOS長押しメニュー無効化 */
+            -webkit-user-select: none;   /* テキスト選択無効化 */
+            user-select: none;
         }
 
         /* --- メインエリア --- */
@@ -120,24 +125,45 @@
         .save-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
 
 
-        /* --- Cropper Styling (タッチ操作用にハンドルを大きく) --- */
+        /* --- Cropper Styling (8つのハンドルを完璧に揃える) --- */
+        /* 基本設定: 全て24pxの青丸 */
         .cropper-point {
-            width: 24px;  /* 押しやすい大きさに変更 */
+            width: 24px;
             height: 24px;
-            background-color: #007bff; /* 青色で見やすく */
-            border-radius: 50%; /* 丸くする */
+            background-color: #007bff;
+            border-radius: 50%;
             opacity: 0.9;
         }
-        /* 大きくした分、中心がずれるのでマージンで補正 (width/2) */
-        .cropper-point.point-n, .cropper-point.point-s { margin-left: -12px; }
-        .cropper-point.point-e, .cropper-point.point-w { margin-top: -12px; }
-        .cropper-point.point-ne, .cropper-point.point-nw, .cropper-point.point-sw, .cropper-point.point-se {
-            margin-left: -12px; margin-top: -12px;
+
+        /* 配置補正ロジック:
+           CropperJSは基準点(0,0や50%)に要素の「左上」を配置します。
+           中心を合わせるには、width/2 と height/2 分だけマイナス方向にずらす必要があります。
+           サイズ24pxなので、 -12px ずつずらします。
+        */
+
+        /* 四隅 (Corners) */
+        .cropper-point.point-nw { left: -12px; top: -12px; }
+        .cropper-point.point-ne { right: -12px; top: -12px; }
+        .cropper-point.point-sw { left: -12px; bottom: -12px; }
+        .cropper-point.point-se { 
+            right: -12px; bottom: -12px; 
+            opacity: 0.9; /* デフォルトのSEだけ見た目が違うのを統一 */
+            width: 24px; height: 24px; /* サイズ強制 */
         }
-        
+
+        /* 上下左右 (Cardinals) - 50%の位置に来るのでマージンで補正 */
+        .cropper-point.point-n { top: -12px; margin-left: -12px; }
+        .cropper-point.point-s { bottom: -12px; margin-left: -12px; }
+        .cropper-point.point-e { right: -12px; margin-top: -12px; }
+        .cropper-point.point-w { left: -12px; margin-top: -12px; }
+
         /* ガイド線と枠のデザイン調整 */
         .cropper-line { background-color: rgba(0, 123, 255, 0.4); }
         .cropper-view-box { outline: 2px solid #007bff; }
+        
+        /* 破線の色を少し明るく */
+        .cropper-dashed { border-color: rgba(255, 255, 255, 0.5); }
+        .cropper-center { display: none; } /* 中心十字は消すかお好みで（ここではシンプルに消す） */
 
 
         /* --- 微調整コントローラー --- */
@@ -160,7 +186,6 @@
             border: none;
         }
 
-        /* 矢印・拡大縮小ボタン */
         .tune-btn {
             background: rgba(0, 0, 0, 0.15);
             border: none;
@@ -206,7 +231,6 @@
         .btn-left { grid-area: left; }
         .btn-right { grid-area: right; }
 
-        /* 中央の速度切替ボタン */
         .btn-center { 
             grid-area: center; 
             font-size: 0.8rem; 
@@ -484,6 +508,13 @@
 </div>
 
 <script>
+    // --- 長押しメニュー無効化 (JS側) ---
+    window.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        return false;
+    }, { passive: false });
+
+
     const image = document.getElementById('image');
     const input = document.getElementById('imageUpload');
     const nextBtn = document.getElementById('nextBtn');
@@ -525,7 +556,7 @@
     let currentAspectRatio = 1.33333; 
 
     // --- 微調整機能 ---
-    let moveStep = 5; // 初期値を5pxに変更
+    let moveStep = 5; 
 
     toggleFineTuneBtn.addEventListener('click', () => {
         if (!cropper) return;
@@ -534,7 +565,6 @@
         toggleFineTuneBtn.classList.toggle('active');
     });
 
-    // 速度切り替えボタンの処理
     const btnSpeedToggle = document.getElementById('btnSpeedToggle');
     btnSpeedToggle.addEventListener('click', () => {
         if (moveStep === 5) {
@@ -552,8 +582,6 @@
         if (!cropper) return;
         const data = cropper.getData();
         const currentRatio = isNaN(currentAspectRatio) ? (data.width / data.height) : currentAspectRatio;
-        
-        // 現在のステップを適用
         const step = moveStep;
 
         if (action === 'up') data.y -= step;
@@ -564,17 +592,13 @@
         if (action === 'zoomIn' || action === 'zoomOut') {
             const delta = (action === 'zoomIn') ? step : -step;
             const newWidth = data.width + delta;
-            
-            // 安全策
             if (newWidth < 10) return;
-
             let newHeight;
             if (isNaN(currentAspectRatio)) {
                 newHeight = newWidth / (data.width / data.height);
             } else {
                 newHeight = newWidth / currentRatio;
             }
-
             const centerX = data.x + (data.width / 2);
             const centerY = data.y + (data.height / 2);
             data.width = newWidth;
@@ -610,10 +634,8 @@
                 }
             });
             
-            // テンキー表示＆スクロール処理
             if (ratioModal.style.display === 'flex') {
                 ratioNumpad.style.display = 'grid';
-                // テンキーが出た分、適用ボタンが隠れないようにスクロール
                 setTimeout(() => {
                     const modalContent = ratioModal.querySelector('.modal');
                     modalContent.scrollTop = modalContent.scrollHeight;

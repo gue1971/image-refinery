@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Image Refinery (v22.0 Final Icon)</title>
+    <title>Image Refinery (v23.0 Dense Control)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
@@ -73,7 +73,7 @@
             border-bottom: 1px solid #444;
             display: flex;
             align-items: center;
-            justify-content: flex-start; /* 左寄せ */
+            justify-content: flex-start;
             gap: 20px;
             z-index: 20;
             height: 80px;
@@ -89,7 +89,6 @@
             border-radius: 12px;
             cursor: pointer; 
             transition: all 0.2s;
-            
             height: 50px;
             min-width: 50px;
             display: flex;
@@ -101,12 +100,8 @@
         .glass-btn:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-1px); }
         .glass-btn.active { background: rgba(0, 123, 255, 0.6); border-color: #007bff; color: #fff; }
 
-        /* SVGアイコン用スタイル */
-        .icon-svg {
-            width: 24px;
-            height: 24px;
-            fill: currentColor;
-        }
+        /* SVGアイコン */
+        .icon-svg { width: 24px; height: 24px; fill: currentColor; }
 
         /* ファイル選択 */
         .file-upload-wrapper input[type="file"] { display: none; }
@@ -130,7 +125,7 @@
         .save-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
 
 
-        /* --- 微調整コントローラー --- */
+        /* --- 微調整コントローラー (絶対配置で圧縮) --- */
         #fineTuneController {
             display: none;
             position: absolute;
@@ -138,20 +133,22 @@
             left: 50%;
             transform: translateX(-50%);
             width: 90%; max-width: 450px;
+            
+            /* ★変更: 両サイドのパッドを中央揃えで配置 */
+            display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: center; /* 垂直方向センター合わせ */
+            
             pointer-events: none;
             z-index: 15;
         }
         
         .tune-pad {
             pointer-events: auto;
-            background: transparent;
-            border: none;
-            display: grid;
-            gap: 0;
+            position: relative; /* 子要素の基準 */
         }
 
+        /* 共通ボタンタイル */
         .tune-btn {
             background: rgba(0, 0, 0, 0.3);
             border: none;
@@ -165,26 +162,38 @@
             text-shadow: 0 1px 2px rgba(0,0,0,0.5);
             transition: transform 0.1s, background 0.1s;
             -webkit-tap-highlight-color: transparent;
+            
+            /* 調整用 */
+            position: absolute; 
         }
+        
         .tune-btn:active { 
             background: rgba(0, 123, 255, 0.6); 
             color: #fff;
             transform: scale(0.95);
+            z-index: 10; /* 押したときに前面へ */
         }
 
-        .size-pad { display: flex; flex-direction: column; gap: 10px; }
-        
-        .move-pad {
-            display: grid;
-            grid-template-areas: 
-                ". up ."
-                "left . right"
-                ". down .";
+        /* --- 左: サイズパッド (縦並び) --- */
+        .size-pad {
+            width: 72px; 
+            height: 160px; /* 上下配置用の高さ確保 */
         }
-        .btn-up { grid-area: up; }
-        .btn-down { grid-area: down; }
-        .btn-left { grid-area: left; }
-        .btn-right { grid-area: right; }
+        #btnZoomIn { top: 0; left: 0; }
+        #btnZoomOut { bottom: 0; left: 0; }
+        
+        /* --- 右: 移動パッド (十字配置) --- */
+        /* コンテナサイズを小さくしてボタンをはみ出させることで中央寄せを実現 */
+        .move-pad {
+            width: 160px; 
+            height: 160px;
+        }
+        
+        /* 上下左右を中央へ寄せる配置 */
+        #btnMoveUp    { top: 0; left: 50%; transform: translateX(-50%); }
+        #btnMoveDown  { bottom: 0; left: 50%; transform: translateX(-50%); }
+        #btnMoveLeft  { top: 50%; left: 0; transform: translateY(-50%); }
+        #btnMoveRight { top: 50%; right: 0; transform: translateY(-50%); }
 
 
         /* --- モーダル --- */
@@ -319,10 +328,10 @@
             <div class="tune-btn" id="btnZoomOut" title="縮小">－</div>
         </div>
         <div class="tune-pad move-pad">
-            <div class="tune-btn btn-up" id="btnMoveUp">▲</div>
-            <div class="tune-btn btn-left" id="btnMoveLeft">◀</div>
-            <div class="tune-btn btn-right" id="btnMoveRight">▶</div>
-            <div class="tune-btn btn-down" id="btnMoveDown">▼</div>
+            <div class="tune-btn" id="btnMoveUp">▲</div>
+            <div class="tune-btn" id="btnMoveLeft">◀</div>
+            <div class="tune-btn" id="btnMoveRight">▶</div>
+            <div class="tune-btn" id="btnMoveDown">▼</div>
         </div>
     </div>
 </div>

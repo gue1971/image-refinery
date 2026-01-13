@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Image Refinery (v27.0 UI Refined)</title>
+    <title>Image Refinery (v28.0 UX Optimized)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
@@ -25,7 +25,8 @@
         .img-container {
             flex-grow: 1;
             width: 100%;
-            height: calc(100vh - 68px);
+            /* ヘッダー高さ変更に伴う調整 (60px) */
+            height: calc(100vh - 60px);
             background: #000;
             overflow: hidden;
             position: relative;
@@ -51,25 +52,26 @@
             align-items: center;
             justify-content: space-between;
             z-index: 20;
-            height: 68px;
+            /* 高さを少し小さく (68px -> 60px) */
+            height: 60px;
         }
 
         .controls-left, .controls-right {
             display: flex;
-            gap: 12px; /* 少し間隔を広げた */
+            gap: 10px; 
             align-items: center;
         }
 
-        /* 情報表示 (場所移動・サイズ変更) */
+        /* 情報表示 */
         .info-box {
             display: flex;
             flex-direction: column;
             justify-content: center;
-            align-items: flex-start; /* 左揃えに変更 */
-            font-size: 0.8rem; /* 0.7rem -> 0.8rem */
+            align-items: flex-start;
+            font-size: 0.8rem;
             line-height: 1.2;
             color: #aaa;
-            margin-left: 4px; /* 左のマージン調整 */
+            margin-left: 4px;
         }
         .info-val {
             font-family: "SF Mono", "Menlo", "Monaco", "Courier New", monospace;
@@ -77,18 +79,18 @@
             color: #fff;
         }
 
-        /* ガラス風共通 */
+        /* ガラス風共通 (サイズ縮小: 44px -> 38px) */
         .glass-btn {
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(8px);
             border: 1px solid rgba(255, 255, 255, 0.2);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             color: #fff;
-            border-radius: 10px;
+            border-radius: 8px; /* 角丸も少し調整 */
             cursor: pointer; 
             transition: all 0.2s;
-            height: 44px;
-            min-width: 44px;
+            height: 38px;
+            min-width: 38px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -98,16 +100,16 @@
         .glass-btn:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-1px); }
         .glass-btn.active { background: rgba(0, 123, 255, 0.6); border-color: #007bff; color: #fff; }
 
-        /* SVGアイコン */
-        .icon-svg { width: 22px; height: 22px; fill: currentColor; }
+        /* SVGアイコン (少し小さく: 22px -> 20px) */
+        .icon-svg { width: 20px; height: 20px; fill: currentColor; }
         .file-upload-wrapper input[type="file"] { display: none; }
         
         /* 比率ボタン */
         .ratio-display-btn {
-            padding: 0 10px;
-            min-width: 70px;
+            padding: 0 8px;
+            min-width: 60px; /* 少し幅も縮小 */
             justify-content: space-between;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
         .ratio-icon { font-size: 0.7rem; color: #aaa; margin-left: 4px; }
 
@@ -115,7 +117,7 @@
         .save-btn {
             background: linear-gradient(135deg, #007bff, #0056b3);
             border: none;
-            width: 44px; 
+            width: 38px; 
         }
         .save-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
 
@@ -124,7 +126,7 @@
         #fineTuneController {
             display: none;
             position: absolute;
-            bottom: 100px;
+            bottom: 80px;
             left: 50%;
             transform: translateX(-50%);
             width: 90%; max-width: 450px;
@@ -177,7 +179,7 @@
                 ". down .";
             gap: 12px;
             width: auto; height: auto;
-            justify-items: center; /* グリッド内で中央寄せ */
+            justify-items: center; 
             align-items: center;
         }
         
@@ -186,15 +188,15 @@
         .btn-left { grid-area: left; }
         .btn-right { grid-area: right; }
 
-        /* 中央の速度切替ボタン (小さく丸く) */
+        /* 中央の速度切替ボタン */
         .btn-center { 
             grid-area: center; 
-            font-size: 0.8rem; /* 文字小さく */
+            font-size: 0.8rem; 
             font-weight: bold;
-            border-radius: 50%; /* 完全な円 */
+            border-radius: 50%; 
             background: rgba(255, 255, 255, 0.1);
             color: #fff;
-            width: 48px; /* 72pxより小さく */
+            width: 48px; 
             height: 48px;
             display: flex;
             align-items: center;
@@ -219,6 +221,8 @@
             background: #2a2a2a; padding: 25px; border-radius: 12px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.5); width: 380px; max-width: 90%;
             border: 1px solid #444; max-height: 90vh; overflow-y: auto;
+            /* スクロールをスムーズに */
+            scroll-behavior: smooth;
         }
         .modal h3 {
             margin-top: 0; margin-bottom: 20px; color: #fff; font-size: 18px;
@@ -316,7 +320,7 @@
         </div>
     </div>
     <div class="controls-right">
-        <div id="toggleFineTuneBtn" class="custom-file-upload glass-btn" style="width: 44px;" title="位置調整">
+        <div id="toggleFineTuneBtn" class="custom-file-upload glass-btn" style="width: 38px;" title="位置調整">
             <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2L8 6h3v5H6V8L2 12l4 4v-3h5v5H8l4 4 4-4h-3v-5h5v3l4-4-4-4v3h-5V6h3L12 2z"/></svg>
         </div>
         <button id="nextBtn" class="save-btn glass-btn" title="保存へ進む">
@@ -337,7 +341,7 @@
         <div class="tune-pad move-pad">
             <div class="tune-btn btn-up" id="btnMoveUp">▲</div>
             <div class="tune-btn btn-left" id="btnMoveLeft">◀</div>
-            <div class="tune-btn btn-center" id="btnSpeedToggle">1px</div>
+            <div class="tune-btn btn-center active-speed" id="btnSpeedToggle">5px</div>
             <div class="tune-btn btn-right" id="btnMoveRight">▶</div>
             <div class="tune-btn btn-down" id="btnMoveDown">▼</div>
         </div>
@@ -504,7 +508,7 @@
     let currentAspectRatio = 1.33333; 
 
     // --- 微調整機能 ---
-    let moveStep = 1; // デフォルト移動量
+    let moveStep = 5; // 初期値を5pxに変更
 
     toggleFineTuneBtn.addEventListener('click', () => {
         if (!cropper) return;
@@ -516,14 +520,14 @@
     // 速度切り替えボタンの処理
     const btnSpeedToggle = document.getElementById('btnSpeedToggle');
     btnSpeedToggle.addEventListener('click', () => {
-        if (moveStep === 1) {
-            moveStep = 5;
-            btnSpeedToggle.innerText = "5px";
-            btnSpeedToggle.classList.add('active-speed');
-        } else {
+        if (moveStep === 5) {
             moveStep = 1;
             btnSpeedToggle.innerText = "1px";
             btnSpeedToggle.classList.remove('active-speed');
+        } else {
+            moveStep = 5;
+            btnSpeedToggle.innerText = "5px";
+            btnSpeedToggle.classList.add('active-speed');
         }
     });
 
@@ -588,8 +592,15 @@
                     el.dataset.selected = "false";
                 }
             });
+            
+            // テンキー表示＆スクロール処理
             if (ratioModal.style.display === 'flex') {
                 ratioNumpad.style.display = 'grid';
+                // テンキーが出た分、適用ボタンが隠れないようにスクロール
+                setTimeout(() => {
+                    const modalContent = ratioModal.querySelector('.modal');
+                    modalContent.scrollTop = modalContent.scrollHeight;
+                }, 200);
             } else if (sizeModal.style.display === 'flex') {
                 sizeNumpad.style.display = 'grid';
             }

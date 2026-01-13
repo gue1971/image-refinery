@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Image Refinery (v23.0 Dense Control)</title>
+    <title>Image Refinery (v24.0 Slim & Spaced)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
@@ -25,7 +25,8 @@
         .img-container {
             flex-grow: 1;
             width: 100%;
-            height: calc(100vh - 80px);
+            /* ヘッダー高さ分を引く (60px) */
+            height: calc(100vh - 60px);
             background: #000;
             overflow: hidden;
             position: relative;
@@ -46,16 +47,16 @@
             top: 15px; left: 15px;
             background: rgba(0, 0, 0, 0.6);
             backdrop-filter: blur(4px);
-            padding: 8px 15px;
-            border-radius: 20px;
+            padding: 6px 12px;
+            border-radius: 16px;
             border: 1px solid rgba(255,255,255,0.1);
             color: rgba(255,255,255,0.8);
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             pointer-events: none;
             z-index: 5;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
         }
         .info-row { display: flex; gap: 6px; align-items: center; }
         .info-val {
@@ -64,19 +65,20 @@
             color: #fff;
         }
 
-        /* --- コントロールパネル --- */
+        /* --- コントロールパネル (スリム化) --- */
         .controls-panel-custom {
             width: 100%;
-            padding: 10px 20px;
+            padding: 5px 15px; /* 余白削減 */
             box-sizing: border-box;
             background: #333;
             border-bottom: 1px solid #444;
             display: flex;
             align-items: center;
             justify-content: flex-start;
-            gap: 20px;
+            gap: 15px;
             z-index: 20;
-            height: 80px;
+            /* ★高さ変更: 80px -> 60px */
+            height: 60px;
         }
 
         /* ガラス風共通 */
@@ -84,71 +86,74 @@
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(8px);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             color: #fff;
-            border-radius: 12px;
+            border-radius: 8px; /* 丸みを少し抑える */
             cursor: pointer; 
             transition: all 0.2s;
-            height: 50px;
-            min-width: 50px;
+            
+            /* ★ボタンサイズ変更: 50px -> 40px */
+            height: 40px;
+            min-width: 40px;
+            
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            padding: 0 15px;
+            padding: 0 10px;
         }
         .glass-btn:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-1px); }
         .glass-btn.active { background: rgba(0, 123, 255, 0.6); border-color: #007bff; color: #fff; }
 
-        /* SVGアイコン */
-        .icon-svg { width: 24px; height: 24px; fill: currentColor; }
+        /* SVGアイコン (小さく) */
+        .icon-svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
 
         /* ファイル選択 */
         .file-upload-wrapper input[type="file"] { display: none; }
-        .custom-file-upload { padding: 0; width: 50px; }
+        .custom-file-upload { padding: 0; width: 40px; }
 
         /* 比率ボタン */
         .ratio-display-btn {
-            min-width: 100px;
+            min-width: 90px;
             justify-content: space-between;
-            font-size: 1rem;
+            font-size: 0.9rem;
         }
-        .ratio-icon { font-size: 0.8rem; color: #aaa; margin-left: 8px; }
+        .ratio-icon { font-size: 0.7rem; color: #aaa; margin-left: 6px; }
 
         /* 保存ボタン */
         .save-btn {
             background: linear-gradient(135deg, #007bff, #0056b3);
             border: none;
-            width: 50px; 
+            width: 40px; 
             padding: 0;
         }
         .save-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
 
 
-        /* --- 微調整コントローラー (絶対配置で圧縮) --- */
+        /* --- 微調整コントローラー (隙間あり配置) --- */
         #fineTuneController {
             display: none;
             position: absolute;
-            bottom: 120px; 
+            bottom: 100px; /* ヘッダーが低くなった分、少し下げる */
             left: 50%;
             transform: translateX(-50%);
             width: 90%; max-width: 450px;
-            
-            /* ★変更: 両サイドのパッドを中央揃えで配置 */
-            display: flex;
             justify-content: space-between;
-            align-items: center; /* 垂直方向センター合わせ */
-            
+            align-items: center;
             pointer-events: none;
             z-index: 15;
         }
         
         .tune-pad {
             pointer-events: auto;
-            position: relative; /* 子要素の基準 */
+            background: transparent;
+            border: none;
         }
 
-        /* 共通ボタンタイル */
         .tune-btn {
             background: rgba(0, 0, 0, 0.3);
             border: none;
@@ -162,38 +167,35 @@
             text-shadow: 0 1px 2px rgba(0,0,0,0.5);
             transition: transform 0.1s, background 0.1s;
             -webkit-tap-highlight-color: transparent;
-            
-            /* 調整用 */
-            position: absolute; 
         }
         
         .tune-btn:active { 
             background: rgba(0, 123, 255, 0.6); 
             color: #fff;
             transform: scale(0.95);
-            z-index: 10; /* 押したときに前面へ */
         }
 
-        /* --- 左: サイズパッド (縦並び) --- */
-        .size-pad {
-            width: 72px; 
-            height: 160px; /* 上下配置用の高さ確保 */
+        /* 左: サイズ */
+        .size-pad { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 16px; /* 縦の間隔 */
         }
-        #btnZoomIn { top: 0; left: 0; }
-        #btnZoomOut { bottom: 0; left: 0; }
         
-        /* --- 右: 移動パッド (十字配置) --- */
-        /* コンテナサイズを小さくしてボタンをはみ出させることで中央寄せを実現 */
+        /* 右: 移動 (グリッドで隙間を作る) */
         .move-pad {
-            width: 160px; 
-            height: 160px;
+            display: grid;
+            grid-template-areas: 
+                ". up ."
+                "left . right"
+                ". down .";
+            /* ★修正: 隙間をしっかり空ける */
+            gap: 8px; 
         }
-        
-        /* 上下左右を中央へ寄せる配置 */
-        #btnMoveUp    { top: 0; left: 50%; transform: translateX(-50%); }
-        #btnMoveDown  { bottom: 0; left: 50%; transform: translateX(-50%); }
-        #btnMoveLeft  { top: 50%; left: 0; transform: translateY(-50%); }
-        #btnMoveRight { top: 50%; right: 0; transform: translateY(-50%); }
+        .btn-up { grid-area: up; }
+        .btn-down { grid-area: down; }
+        .btn-left { grid-area: left; }
+        .btn-right { grid-area: right; }
 
 
         /* --- モーダル --- */
@@ -299,7 +301,7 @@
         <span class="ratio-icon">▼</span>
     </div>
 
-    <div id="toggleFineTuneBtn" class="custom-file-upload glass-btn" style="width: 50px;" title="位置調整">
+    <div id="toggleFineTuneBtn" class="custom-file-upload glass-btn" style="width: 40px;" title="位置調整">
         <svg class="icon-svg" viewBox="0 0 24 24"><path d="M10 9h4V6h3l-5-5-5 5h3v3zm-1 1H6V7l-5 5 5 5v-3h3v-4zm14 2l-5-5v3h-3v4h3v3l5-5zm-9 3h-4v3H7l5 5 5-5h-3v-3z"/></svg>
     </div>
 
@@ -315,7 +317,7 @@
         <div class="info-row">
             <span>Original:</span><span id="originalSizeText" class="info-val">-</span>
         </div>
-        <div class="info-row" style="border-left: 1px solid rgba(255,255,255,0.3); padding-left: 15px;">
+        <div class="info-row" style="border-left: 1px solid rgba(255,255,255,0.3); padding-left: 12px;">
             <span>Crop:</span><span id="cropSizeText" class="info-val">-</span>
         </div>
     </div>
@@ -328,10 +330,10 @@
             <div class="tune-btn" id="btnZoomOut" title="縮小">－</div>
         </div>
         <div class="tune-pad move-pad">
-            <div class="tune-btn" id="btnMoveUp">▲</div>
-            <div class="tune-btn" id="btnMoveLeft">◀</div>
-            <div class="tune-btn" id="btnMoveRight">▶</div>
-            <div class="tune-btn" id="btnMoveDown">▼</div>
+            <div class="tune-btn btn-up" id="btnMoveUp">▲</div>
+            <div class="tune-btn btn-left" id="btnMoveLeft">◀</div>
+            <div class="tune-btn btn-right" id="btnMoveRight">▶</div>
+            <div class="tune-btn btn-down" id="btnMoveDown">▼</div>
         </div>
     </div>
 </div>

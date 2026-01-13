@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Image Refinery (v26.0 Sketch Layout)</title>
+    <title>Image Refinery (v27.0 Header Info)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
@@ -25,7 +25,7 @@
         .img-container {
             flex-grow: 1;
             width: 100%;
-            height: calc(100vh - 60px); /* ヘッダー分(60px)引く */
+            height: calc(100vh - 60px); /* ヘッダー分 */
             background: #000;
             overflow: hidden;
             position: relative;
@@ -40,32 +40,7 @@
             z-index: 0;
         }
 
-        /* --- 情報オーバーレイ (1行・Original表記) --- */
-        .info-overlay {
-            position: absolute;
-            top: 15px; left: 15px;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(4px);
-            padding: 6px 15px;
-            border-radius: 20px;
-            border: 1px solid rgba(255,255,255,0.1);
-            color: rgba(255,255,255,0.9);
-            font-size: 0.75rem;
-            pointer-events: none;
-            z-index: 5;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            white-space: nowrap; /* 折り返し防止 */
-        }
-        .info-row { display: flex; gap: 6px; align-items: center; }
-        .info-val {
-            font-family: "SF Mono", "Menlo", "Monaco", "Courier New", monospace;
-            font-weight: bold;
-            color: #fff;
-        }
-
-        /* --- コントロールパネル (スリム・左寄せ) --- */
+        /* --- コントロールパネル (左右配置) --- */
         .controls-panel-custom {
             width: 100%;
             padding: 0 15px;
@@ -74,10 +49,48 @@
             border-bottom: 1px solid #444;
             display: flex;
             align-items: center;
-            justify-content: flex-start; /* 左寄せ */
-            gap: 12px;
-            z-index: 20;
+            justify-content: space-between; /* 左右に分ける */
             height: 60px;
+            z-index: 20;
+        }
+
+        /* 左側グループ (操作系) */
+        .controls-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* 右側グループ (情報＋保存) */
+        .controls-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* 情報表示 (ヘッダー内2行) */
+        .info-box {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-end; /* 右寄せ */
+            font-size: 0.7rem;
+            line-height: 1.3;
+            color: #aaa;
+            /* 幅確保 */
+            min-width: 80px; 
+        }
+        .info-row {
+            display: flex;
+            gap: 6px;
+        }
+        .info-label {
+            display: inline-block;
+        }
+        .info-val {
+            font-family: "SF Mono", "Menlo", "Monaco", "Courier New", monospace;
+            font-weight: bold;
+            color: #fff;
         }
 
         /* ガラス風共通 */
@@ -91,7 +104,6 @@
             cursor: pointer; 
             transition: all 0.2s;
             
-            /* スリムサイズ */
             height: 40px;
             min-width: 40px;
             
@@ -104,7 +116,6 @@
         .glass-btn:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-1px); }
         .glass-btn.active { background: rgba(0, 123, 255, 0.6); border-color: #007bff; color: #fff; }
 
-        /* SVGアイコン */
         .icon-svg { width: 20px; height: 20px; fill: currentColor; }
 
         /* ファイル選択 */
@@ -119,7 +130,7 @@
         }
         .ratio-icon { font-size: 0.7rem; color: #aaa; margin-left: 4px; }
 
-        /* 保存ボタン (アクセントカラー) */
+        /* 保存ボタン */
         .save-btn {
             background: linear-gradient(135deg, #007bff, #0056b3);
             border: none;
@@ -129,16 +140,16 @@
         .save-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
 
 
-        /* --- 微調整コントローラー (スケッチ再現レイアウト) --- */
+        /* --- 微調整コントローラー --- */
         #fineTuneController {
             display: none;
             position: absolute;
-            bottom: 80px; /* ヘッダー上 */
+            bottom: 80px;
             left: 50%;
             transform: translateX(-50%);
             width: 95%; max-width: 500px;
             justify-content: space-between;
-            align-items: center; /* 垂直センター */
+            align-items: center;
             pointer-events: none;
             z-index: 15;
         }
@@ -149,21 +160,18 @@
             border: none;
         }
 
-        /* ボタン共通スタイル (円形・シンプル) */
         .tune-btn {
-            background: rgba(0, 0, 0, 0.4); /* 少し濃いめにして視認性確保 */
+            background: rgba(0, 0, 0, 0.4);
             border: 2px solid rgba(255,255,255,0.1);
             color: #fff;
             border-radius: 50%;
-            width: 60px; height: 60px; /* ほどよい大きさ */
+            width: 60px; height: 60px;
             font-size: 1.8rem; 
             display: flex; align-items: center; justify-content: center;
             cursor: pointer;
             user-select: none;
             transition: transform 0.1s, background 0.1s;
             -webkit-tap-highlight-color: transparent;
-            
-            /* アイコン用 */
             padding: 0;
             line-height: 1;
         }
@@ -174,21 +182,19 @@
             transform: scale(0.92);
         }
 
-        /* 左: サイズ (縦並び・隙間あり) */
+        /* 左: サイズ */
         .size-pad { 
             display: flex; 
             flex-direction: column; 
             gap: 20px; 
         }
         
-        /* 右: 移動 (ひし形配置・隙間あり) */
+        /* 右: 移動 (ひし形) */
         .move-pad {
             display: grid;
             grid-template-columns: 60px 60px 60px;
             grid-template-rows: 60px 60px 60px;
-            /* 行列を詰める */
             gap: 5px; 
-            
             grid-template-areas: 
                 ". up ."
                 "left . right"
@@ -291,39 +297,46 @@
 <body>
 
 <div class="controls-panel-custom">
-    <div class="file-upload-wrapper">
-        <label for="imageUpload" class="custom-file-upload glass-btn" title="画像を開く">
-            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
-        </label>
-        <input type="file" id="imageUpload" accept="image/*">
+    
+    <div class="controls-left">
+        <div class="file-upload-wrapper">
+            <label for="imageUpload" class="custom-file-upload glass-btn" title="画像を開く">
+                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
+            </label>
+            <input type="file" id="imageUpload" accept="image/*">
+        </div>
+
+        <div id="openRatioModalBtn" class="ratio-display-btn glass-btn">
+            <span id="currentRatioValue" class="ratio-value">4:3</span>
+            <span class="ratio-icon">▼</span>
+        </div>
+
+        <div id="toggleFineTuneBtn" class="custom-file-upload glass-btn" style="width: 40px;" title="位置調整">
+            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2L8 6h3v5H6V8L2 12l4 4v-3h5v5H8l4 4 4-4h-3v-5h5v3l4-4-4-4v3h-5V6h3L12 2z"/></svg>
+        </div>
     </div>
 
-    <div id="openRatioModalBtn" class="ratio-display-btn glass-btn">
-        <span id="currentRatioValue" class="ratio-value">4:3</span>
-        <span class="ratio-icon">▼</span>
+    <div class="controls-right">
+        <div class="info-box">
+            <div class="info-row">
+                <span class="info-label">Original:</span>
+                <span id="originalSizeText" class="info-val">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Crop:</span>
+                <span id="cropSizeText" class="info-val">-</span>
+            </div>
+        </div>
+
+        <button id="nextBtn" class="save-btn glass-btn" title="保存へ進む">
+            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+        </button>
     </div>
 
-    <div id="toggleFineTuneBtn" class="custom-file-upload glass-btn" style="width: 40px;" title="位置調整">
-        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2L8 6h3v5H6V8L2 12l4 4v-3h5v5H8l4 4 4-4h-3v-5h5v3l4-4-4-4v3h-5V6h3L12 2z"/></svg>
-    </div>
-
-    <button id="nextBtn" class="save-btn glass-btn" title="保存へ進む">
-        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-    </button>
 </div>
 
 <div class="img-container">
     <div class="placeholder">画像をドラッグ＆ドロップ<br>またはファイルを選択</div>
-    
-    <div class="info-overlay">
-        <div class="info-row">
-            <span>Original:</span><span id="originalSizeText" class="info-val">-</span>
-        </div>
-        <div class="info-row" style="border-left: 1px solid rgba(255,255,255,0.3); padding-left: 15px;">
-            <span>Crop:</span><span id="cropSizeText" class="info-val">-</span>
-        </div>
-    </div>
-
     <img id="image" style="max-width: 100%; display: block; opacity: 0;">
     
     <div id="fineTuneController">

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Image Refinery (v28.0 UX Optimized)</title>
+    <title>Image Refinery (v29.0 Touch Handles)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
@@ -25,7 +25,6 @@
         .img-container {
             flex-grow: 1;
             width: 100%;
-            /* ヘッダー高さ変更に伴う調整 (60px) */
             height: calc(100vh - 60px);
             background: #000;
             overflow: hidden;
@@ -52,7 +51,6 @@
             align-items: center;
             justify-content: space-between;
             z-index: 20;
-            /* 高さを少し小さく (68px -> 60px) */
             height: 60px;
         }
 
@@ -79,14 +77,14 @@
             color: #fff;
         }
 
-        /* ガラス風共通 (サイズ縮小: 44px -> 38px) */
+        /* ガラス風共通 */
         .glass-btn {
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(8px);
             border: 1px solid rgba(255, 255, 255, 0.2);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             color: #fff;
-            border-radius: 8px; /* 角丸も少し調整 */
+            border-radius: 8px;
             cursor: pointer; 
             transition: all 0.2s;
             height: 38px;
@@ -100,14 +98,14 @@
         .glass-btn:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-1px); }
         .glass-btn.active { background: rgba(0, 123, 255, 0.6); border-color: #007bff; color: #fff; }
 
-        /* SVGアイコン (少し小さく: 22px -> 20px) */
+        /* SVGアイコン */
         .icon-svg { width: 20px; height: 20px; fill: currentColor; }
         .file-upload-wrapper input[type="file"] { display: none; }
         
         /* 比率ボタン */
         .ratio-display-btn {
             padding: 0 8px;
-            min-width: 60px; /* 少し幅も縮小 */
+            min-width: 60px;
             justify-content: space-between;
             font-size: 0.85rem;
         }
@@ -120,6 +118,26 @@
             width: 38px; 
         }
         .save-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+
+        /* --- Cropper Styling (タッチ操作用にハンドルを大きく) --- */
+        .cropper-point {
+            width: 24px;  /* 押しやすい大きさに変更 */
+            height: 24px;
+            background-color: #007bff; /* 青色で見やすく */
+            border-radius: 50%; /* 丸くする */
+            opacity: 0.9;
+        }
+        /* 大きくした分、中心がずれるのでマージンで補正 (width/2) */
+        .cropper-point.point-n, .cropper-point.point-s { margin-left: -12px; }
+        .cropper-point.point-e, .cropper-point.point-w { margin-top: -12px; }
+        .cropper-point.point-ne, .cropper-point.point-nw, .cropper-point.point-sw, .cropper-point.point-se {
+            margin-left: -12px; margin-top: -12px;
+        }
+        
+        /* ガイド線と枠のデザイン調整 */
+        .cropper-line { background-color: rgba(0, 123, 255, 0.4); }
+        .cropper-view-box { outline: 2px solid #007bff; }
 
 
         /* --- 微調整コントローラー --- */
@@ -221,7 +239,6 @@
             background: #2a2a2a; padding: 25px; border-radius: 12px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.5); width: 380px; max-width: 90%;
             border: 1px solid #444; max-height: 90vh; overflow-y: auto;
-            /* スクロールをスムーズに */
             scroll-behavior: smooth;
         }
         .modal h3 {

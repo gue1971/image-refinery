@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Image Refinery (v21.0 Modern UI)</title>
+    <title>Image Refinery (v22.0 Final Icon)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
@@ -40,14 +40,14 @@
             z-index: 0;
         }
 
-        /* --- 情報オーバーレイ (1行に変更) --- */
+        /* --- 情報オーバーレイ --- */
         .info-overlay {
             position: absolute;
             top: 15px; left: 15px;
             background: rgba(0, 0, 0, 0.6);
             backdrop-filter: blur(4px);
             padding: 8px 15px;
-            border-radius: 20px; /* 丸みを強く */
+            border-radius: 20px;
             border: 1px solid rgba(255,255,255,0.1);
             color: rgba(255,255,255,0.8);
             font-size: 0.75rem;
@@ -55,7 +55,7 @@
             z-index: 5;
             display: flex;
             align-items: center;
-            gap: 15px; /* 項目間の間隔 */
+            gap: 15px;
         }
         .info-row { display: flex; gap: 6px; align-items: center; }
         .info-val {
@@ -64,7 +64,7 @@
             color: #fff;
         }
 
-        /* --- コントロールパネル (左寄せ) --- */
+        /* --- コントロールパネル --- */
         .controls-panel-custom {
             width: 100%;
             padding: 10px 20px;
@@ -73,9 +73,8 @@
             border-bottom: 1px solid #444;
             display: flex;
             align-items: center;
-            /* ★変更: 左寄せ */
-            justify-content: flex-start; 
-            gap: 20px; /* ボタン間の余白 */
+            justify-content: flex-start; /* 左寄せ */
+            gap: 20px;
             z-index: 20;
             height: 80px;
         }
@@ -291,8 +290,8 @@
         <span class="ratio-icon">▼</span>
     </div>
 
-    <div id="toggleFineTuneBtn" class="custom-file-upload glass-btn" style="width: 50px;" title="微調整">
-        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/></svg>
+    <div id="toggleFineTuneBtn" class="custom-file-upload glass-btn" style="width: 50px;" title="位置調整">
+        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M10 9h4V6h3l-5-5-5 5h3v3zm-1 1H6V7l-5 5 5 5v-3h3v-4zm14 2l-5-5v3h-3v4h3v3l5-5zm-9 3h-4v3H7l5 5 5-5h-3v-3z"/></svg>
     </div>
 
     <button id="nextBtn" class="save-btn glass-btn" title="保存へ進む">
